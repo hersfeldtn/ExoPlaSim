@@ -95,6 +95,7 @@
 !     ********************
 !
       parameter(NTRACE = 1)                ! # of tracers 1st. reserved for q
+	  parameter(NAERO = 1)                 ! # of aerosols (tracers with extra gravitational settling term)
       parameter(NLON = NLAT + NLAT)        ! Number of longitudes
       parameter(NTRU = (NLON-1) / 3)       ! Triangular truncation
       parameter(NLPP = NLAT / NPRO)        ! Latitudes per process
@@ -359,6 +360,7 @@
       real :: du0(NHOR,NLEP)  = 0.     ! zonal wind at time t 
       real :: dv0(NHOR,NLEP)  = 0.     ! meridional wind at time t 
       real :: dtrace(NLON,NLAT,NLEV,NTRACE) = 1.0 ! Trace array
+	  real :: daeros(NLON,NLAT,NLEV,NAERO) = 1.0 ! Aerosol array
       
       real :: mint(NHOR) = 0.0 !Minimum troposphere temperature 
       
