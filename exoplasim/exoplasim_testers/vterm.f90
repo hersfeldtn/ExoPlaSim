@@ -1,4 +1,4 @@
-! Calculate terminal velocity of aerosol possibles
+! Calculate terminal velocity of aerosol particles
 ! Sources:
 ! 
 ! Parmentier, V. et al. (2013) 3D mixing in hot Jupiter atmospheres. I: Application to the day/night cold trap in HD 209458b
@@ -184,7 +184,7 @@ END PROGRAM
 !****6***0*********0*********0*********0*********0*********0**********72
 	SUBROUTINE gsettle(t,rho,im,jm,nl,q,vterm)
 	
-! 	Calculate the terminal velocity of aerosol particles in the vertical direction
+! 	Calculate mass mixing ratio of haze particles at each timestep
 !****6***0*********0*********0*********0*********0*********0**********72
 
 	IMPLICIT NONE

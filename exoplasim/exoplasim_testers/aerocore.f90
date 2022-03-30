@@ -272,15 +272,16 @@
 
       real :: dtdx5(jm) 
       real ::   w(im,jm,nl) ! Vertical mass flux
-      real :: crx(im,jm,nl),cry(im,jm,nl)
+      real :: crx(im,jm,nl),cry(im,jm,nl) ! Courant number in x and y direction
       real :: delp(im,jm,nl),delp1(im,jm,nl),delp2(im,jm,nl) ! Layer thickness
-      real :: delp2dyn(im,jm,nl) !
-      real :: xmass(im,jm,nl),ymass(im,jm,nl) !
-      real ::   dg1(im),dg2(im,jm),dpi(im,jm,nl) !
+      real :: delp2dyn(im,jm,nl) ! Layer thickness predicted by dynamical core outside this subroutine
+      real :: xmass(im,jm,nl),ymass(im,jm,nl) ! Mass fluxes in x and y direction
+      real ::   dg1(im),dg2(im,jm),dpi(im,jm,nl) ! 
       real ::  qlow(im,jm,nl), daero(im,jm,nl) !
       real ::    qz(im,jm,nl),qmax(im,jm,nl),qmin(im,jm,nl) !
       real ::    wk(im,jm,nl),pu(im,jm,nl) !
-      real ::    fx(im+1,jm,nl),fy(im,jm,nl),fz(im,jm,nl+1) !
+      real ::    fx(im+1,jm,nl),fy(im,jm,nl),fz(im,jm,nl+1) ! x, y, z density-weighted mmr fluxes
+	  real ::	mu(im,jm,nl) ! Viscosity of bulk gas calculated by viscos subroutine
 
 ! scalars
 
@@ -545,7 +546,7 @@
 
          delp1(:,:,k) = dap(k) + dbk(k)*ps1(:,:) ! Pressure thickness at time t, depends on choice of levels scheme via coefficients dap and dbk (see intro comment)
          delp2(:,:,k) = dap(k) + dbk(k)*ps2(:,:) ! Pressure thickness at time t+dt, depends on choice of levels scheme
-         delp (:,:,k) = delp1(:,:,k) + dpi(:,:,k) ! Pressure thickness at time to plus tendency of mass flux
+         delp (:,:,k) = delp1(:,:,k) + dpi(:,:,k) ! Pressure thickness at time t plus tendency of horizontal mass flux
  
 ! Check deformation of the flow fields
 
@@ -564,6 +565,13 @@
         endif
 
       enddo !vertical layer loop
+
+	  
+!****6***0*********0*********0*********0*********0*********0**********72
+! Calculate viscosity of bulk gas, store as mu
+!****6***0*********0*********0*********0*********0*********0**********72
+	
+	call viscos(ta,im,jm,nl,mu)
 
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Do transport one tracer at a time.
@@ -747,432 +755,175 @@
       RETURN
       END ! End of aerocore subroutine
  
-!****6***0*********0*********0*********0*********0*********0**********72
-      subroutine FCT3D(P,plow,fx,fy,fz,im,jm,km,j1,j2,delp,adx,ady, &
-                       wk1,Qmax,Qmin,wkx,CRX,CRY,acosp,dlat,RCAP)
-!****6***0*********0*********0*********0*********0*********0**********72
- 
-! MFCT Limiter
-! plow: low order solution matrix
-! P: current solution matrix
- 
-      PARAMETER (esl = 1.E-30)
-      REAL P(IM,JM,km),CRX(IM,JM,km),CRY(IM,JM,km),plow(IM,JM,km), &
-           Qmax(IM,JM,km),Qmin(IM,JM,km),acosp(*),delp(im,jm,km), &
-           adx(IM,JM,km),ady(IM,JM,km),fx(IM+1,JM,km), &
-           fy(IM,JM,km),fz(im,jm,km+1),wk1(IM,JM,km), &
-           wkx(im,jm),wkn(im,jm),dlat(jm)
- 
-      JM1 = JM-1
- 
-! Find local min/max of the low-order monotone solution
-      call hilo3D(P,im,jm,km,j1,j2,adx,ady,Qmax,Qmin,wkx,wkn)
-      call hilo3D(plow,im,jm,km,j1,j2,Qmax,Qmin,wk1,P,wkx,wkn)
-! P is destroyed!
- 
-!     GOTO 123
 
-!MIC$ do all autoscope
-!MIC$* shared(im,j1,j2,km,CRX,CRY,adx,ady,Qmax,Qmin)
-!MIC$* private(i,j,k,IT,JT,PS1,PS2,PN1,PN2)
-
-      DO 1000 k=1,km
-      do j=j1,j2
-      DO i=1,IM
  
-      IT = NINT( float(i) - CRX(i,j,k) )
-! Wrap around in E-W
-      if(IT .lt. 1) then
-            IT = IM + IT
-      elseif(IT .GT. IM) then
-            IT = IT - IM
-      endif
- 
-      JT = NINT( float(j) - CRY(i,j,k) )
-      Qmax(i,j,k) = max(Qmax(i,j,k), adx(IT,JT,k))
-      Qmin(i,j,k) = min(Qmin(i,j,k), ady(IT,JT,k))
-      enddo
-      enddo
- 
-! Poles:
-      PS1 = max(Qmax(1, 1,k), adx(1, 1,k))
-      PS2 = min(Qmin(1, 1,k), ady(1, 1,k))
- 
-      PN1 = max(Qmax(1,JM,k), adx(1,JM,k))
-      PN2 = min(Qmin(1,JM,k), ady(1,JM,k))
-      DO i=1,IM
-      Qmax(i, 1,k) = PS1
-      Qmin(i, 1,k) = PS2
- 
-      Qmax(i,JM,k) = PN1
-      Qmin(i,JM,k) = PN2
-      enddo
-1000  continue
- 
-123   continue
-! Flux Limiter
- 
-!MIC$ do all autoscope
-!MIC$* shared(adx,ady,fx,fy,fz,plow,Qmax,Qmin,delp)
-!MIC$* private(wkx,wkn)
-!MIC$* private(i,j,k,ain,aou,bin,bou,cin,cou,btop,bdon)
-
-      DO 2000 k=1,km
- 
-      DO j=j1,j2
-      DO i=1,IM
-         if(fx(i,j,k) .gt. 0.) then
-         Ain = fx(i,j,k)
-         Aou = 0.
-         else
-         Ain = 0.
-         Aou = -fx(i,j,k)
-         endif
- 
-         if(fx(i+1,j,k) .gt. 0.) then
-         Aou = Aou + fx(i+1,j,k)
-         else
-         Ain = Ain - fx(i+1,j,k)
-         endif
- 
-         if(fy(i,j,k) .gt. 0.) then
-         Bin = fy(i,j,k)
-         Bou = 0.
-         else
-         Bin = 0.
-         Bou = -fy(i,j,k)
-         endif
- 
-         if(fy(i,j+1,k) .gt. 0.) then
-         Bou = Bou + fy(i,j+1,k)
-         else
-         Bin = Bin - fy(i,j+1,k)
-         endif
- 
-         if(fz(i,j,k) .gt. 0.) then
-         Cin = fz(i,j,k)
-         Cou = 0.
-         else
-         Cin = 0.
-         Cou = -fz(i,j,k)
-         endif
- 
-         if(fz(i,j,k+1) .gt. 0.) then
-         Cou = Cou + fz(i,j,k+1)
-         else
-         Cin = Cin - fz(i,j,k+1)
-         endif
-
-!HW 2009 - 
-!****6***0*********0*********0*********0*********0*********0**********72
-         wkx(i,j) = Ain + Bin*acosp(j)/dlat(j) + Cin
-         wkn(i,j) = Aou + Bou*acosp(j)/dlat(j) + Cou
-!****6***0*********0*********0*********0*********0*********0**********72
-!HW 2009 - 
-      enddo
-      enddo
- 
-      DO j=j1,j2
-      DO i=1,IM
-      adx(i,j,k) = delp(i,j,k)*(Qmax(i,j,k)-plow(i,j,k))/(wkx(i,j)+esl)
-      ady(i,j,k) = delp(i,j,k)*(plow(i,j,k)-Qmin(i,j,k))/(wkn(i,j)+esl)
-      enddo
-      enddo
- 
-! S Pole
-      Ain = 0.
-      Aou = 0.
-      DO i=1,IM
-      if(fy(i,j1,k).gt. 0.) then
-           Aou = Aou + fy(i,j1,k)
-      else
-           Ain = Ain + fy(i,j1,k)
-      endif
-      enddo
-      Ain = -Ain * RCAP
-      Aou =  Aou * RCAP
- 
-! add vertical contribution...
- 
-      i=1
-      j=1
-      if(fz(i,j,k) .gt. 0.) then
-      Cin = fz(i,j,k)
-      Cou = 0.
-      else
-      Cin = 0.
-      Cou = -fz(i,j,k)
-      endif
- 
-      if(fz(i,j,k+1) .gt. 0.) then
-      Cou = Cou + fz(i,j,k+1)
-      else
-      Cin = Cin - fz(i,j,k+1)
-      endif
- 
-!****6***0*********0*********0*********0*********0*********0**********72
-      btop = delp(1,1,k)*(Qmax(1,1,k)-plow(1,1,k))/(Ain+Cin+esl)
-      bdon = delp(1,1,k)*(plow(1,1,k)-Qmin(1,1,k))/(Aou+Cou+esl)
-!****6***0*********0*********0*********0*********0*********0**********72
- 
-      DO i=1,IM
-      adx(i,j,k) = btop
-      ady(i,j,k) = bdon
-      enddo
-! N Pole
-      J=JM
-      Ain = 0.
-      Aou = 0.
-      DO i=1,IM
-      if(fy(i,j2+1,k).gt. 0.) then
-           Ain = Ain + fy(i,j2+1,k)
-      else
-           Aou = Aou + fy(i,j2+1,k)
-      endif
-      enddo
-      Ain =  Ain * RCAP
-      Aou = -Aou * RCAP
- 
-! add vertical contribution...
- 
-      i=1
-      if(fz(i,j,k) .gt. 0.) then
-      Cin = fz(i,j,k)
-      Cou = 0.
-      else
-      Cin = 0.
-      Cou = -fz(i,j,k)
-      endif
- 
-      if(fz(i,j,k+1) .gt. 0.) then
-      Cou = Cou + fz(i,j,k+1)
-      else
-      Cin = Cin - fz(i,j,k+1)
-      endif
- 
-!****6***0*********0*********0*********0*********0*********0**********72
-      btop = delp(1,j,k)*(Qmax(1,j,k)-plow(1,j,k))/(Ain+Cin+esl)
-      bdon = delp(1,j,k)*(plow(1,j,k)-Qmin(1,j,k))/(Aou+Cou+esl)
-!****6***0*********0*********0*********0*********0*********0**********72
- 
-      DO i=1,IM
-      adx(i,j,k) = btop
-      ady(i,j,k) = bdon
-      enddo
- 
-      if(j1 .ne. 2) then
-      DO i=1,IM
-! SP
-      adx(i,2,k) = adx(i,1,k)
-      ady(i,2,k) = ady(i,1,k)
-! NP
-      adx(i,JM1,k) = adx(i,JM,k)
-      ady(i,JM1,k) = ady(i,JM,k)
-      enddo
-      endif
-2000  continue
- 
-!MIC$ do all autoscope
-!MIC$* shared(fz,adx,ady,im,jm,km)
-!MIC$* private(i,j,k)
-
-      DO 3000 k=1,km
-      DO j=j1,j2
-      do i=2,IM
-      if(fx(i,j,k) .gt. 0.) then
-      fx(i,j,k) = min(1.,ady(i-1,j,k),adx(i,j,k))*fx(i,j,k)
-      else
-      fx(i,j,k) = min(1.,adx(i-1,j,k),ady(i,j,k))*fx(i,j,k)
-      endif
-      enddo
-      enddo
- 
-! For i=1
-      DO j=j1,j2
-      if(fx(1,j,k) .gt. 0.) then
-      fx(1,j,k) = min(1.,ady(IM,j,k),adx(1,j,k))*fx(1,j,k)
-      else
-      fx(1,j,k) = min(1.,adx(IM,j,k),ady(1,j,k))*fx(1,j,k)
-      endif
-      fx(IM+1,j,k) = fx(1,j,k)
-      enddo
- 
-      do j=j1,j2+1
-      do i=1,IM
-      if(fy(i,j,k) .gt. 0.) then
-        fy(i,j,k) = min(1.,ady(i,j-1,k),adx(i,j,k))*fy(i,j,k)
-      else
-        fy(i,j,k) = min(1.,adx(i,j-1,k),ady(i,j,k))*fy(i,j,k)
-      endif
-      enddo
-      enddo
-
-      if(k .ne. 1) then
-      do j=1,jm
-      do i=1,im
-      if(fz(i,j,k) .gt. 0.) then
-        fz(i,j,k) = min(1.,ady(i,j,k-1),adx(i,j,k))*fz(i,j,k)
-      else
-        fz(i,j,k) = min(1.,adx(i,j,k-1),ady(i,j,k))*fz(i,j,k)
-      endif
-      enddo
-      enddo
-      endif
-
-3000  continue
- 
-      return
-      end
- 
-!****6***0*********0*********0*********0*********0*********0**********72
-      subroutine ytp(IMR,JNP,j1,j2,acosp,dlat,RCAP,DQ,P,C,DC2 &
-                    ,ymass,fy1,A6,AR,AL,fy2,JORD,nud)
-!****6***0*********0*********0*********0*********0*********0**********72
-!     do-loops re-written and "dlat" introduced by Hui Wan 
-!     for PlanetSimulator (2009-05).
-
-      implicit none
-
-      integer imr,jnp,j1,j2,jord,nud
-      REAL P(IMR,JNP),C(IMR,JNP),ymass(IMR,JNP),fy2(IMR,JNP), &
-           DC2(IMR,JNP),DQ(IMR,JNP),acosp(JNP),dlat(JNP),rcap
-
-! Work array
-      REAL fy1(IMR,JNP),AR(IMR,JNP),AL(IMR,JNP),A6(IMR,JNP)
-      real sum1,sum2
-      integer i,j,jt,jmr
- 
-      JMR = JNP - 1
- 
-      if(JORD.eq.1) then  
-!     upwind scheme
-
-         do 1000 j=2,jnp
-         do 1000 i=1,imr
-            if ( c(i,j).le.0. ) then
-               jt = j
-            else
-               jt = j-1
-            endif
-1000     fy1(i,j) = p(i,jt)
-
-         do 1050 j=j1,j2+1
-         do 1050 i=1,imr
-1050     fy2(i,j) = 0.
-
-      else
-
-         call ymist(IMR,JNP,j1,P,DC2)
- 
-         if(JORD.LE.0 .or. JORD.GE.3) then
-!        PPM
-!!           call fyppm(C,P,DC2,fy1,fy2,IMR,JNP,j1,j2,A6,AR,AL,JORD)
-             write(nud,*) 'PPM algorithm not yet adapted'
-             stop
-
-         else
-!        van Leer
-           do 1200 j=2,jnp
-           do 1200 i=1,imr
-              if ( c(i,j).le.0. ) then
-                 jt = j
-              else
-                 jt = j-1
-              endif
-           fy1(i,j) = p(i,jt)
-1200       fy2(i,j) = (sign(1.,C(i,j))-C(i,j)/dlat(jt))*DC2(i,jt)
-
-         endif ! van Leer or PPM
-      endif    ! upwind or higher order
-
-      do 1300 j=2,jnp
-      do 1300 i=1,imr
-      fy1(i,j) = fy1(i,j)*ymass(i,j)
-1300  fy2(i,j) = fy2(i,j)*ymass(i,j)
- 
-      DO 1400 j=j1,j2
-      DO 1400 i=1,IMR
-1400  DQ(i,j) = DQ(i,j) + (fy1(i,j) - fy1(i,j+1)) * acosp(j)/dlat(j)
- 
-! Poles
-      sum1 = fy1(IMR,j1  )
-      sum2 = fy1(IMR,J2+1)
-      do i=1,IMR-1
-      sum1 = sum1 + fy1(i,j1  )
-      sum2 = sum2 + fy1(i,J2+1)
-      enddo
- 
-      sum1 = DQ(1,  1) - sum1 * RCAP
-      sum2 = DQ(1,JNP) + sum2 * RCAP
-      do i=1,IMR
-      DQ(i,  1) = sum1
-      DQ(i,JNP) = sum2
-      enddo
- 
-!     if(j1.ne.2) then
-!     do i=1,IMR
-!     DQ(i,  2) = sum1
-!     DQ(i,JMR) = sum2
-!     enddo
-!     endif
-
-      return
-      end
- 
-!****6***0*********0*********0*********0*********0*********0**********72
-      subroutine  ymist(IMR,JNP,j1,P,DC)
-!****6***0*********0*********0*********0*********0*********0**********72
-!     re-written by Hui Wan for the PlanetSimulator (2009-05)
-
-      implicit none
-
-!     input and output
-
-      integer imr,jnp,j1
-      real p(imr,jnp),dc(imr,jnp)
-
-!     local variables
-
-      integer imh,jmr,i,j
-      real r24
-      parameter ( r24 = 1./24. )
-      real tmp,pmin,pmax
+! The subroutines below calculate the terminal velocity of aerosol particles and the flux due to gravitational settling.
+! Sources:
 !
-! 2nd order version for scalars
+! Rosner, D. (2000) Transport Processes in Chemically Reacting Flow Systems
+! Parmentier, V. et al. (2013) 3D mixing in hot Jupiter atmospheres. I: Application to the day/night cold trap in HD 209458b
+! Steinrueck, M. et al. (2021) 3D simulations of photochemical hazes in the atmosphere of hot Jupiter HD 189733b
 !
-      imh = imr / 2
-      jmr = jnp - 1
 
-      do 10 j=2,jmr 
-      do 10 i=1,imr
-      tmp = 0.25*(p(i,j+1) - p(i,j-1))
-      pmax = max(p(i,j-1),p(i,j),p(i,j+1)) - p(i,j)
-      pmin = p(i,j) - min(p(i,j-1),p(i,j),p(i,j+1))
-      dc(i,j) = sign(min(abs(tmp),pmin,pmax),tmp)
-10    continue
-!
-! Poles:
-! Determine slopes in polar caps for scalars!
- 
-      do 20 i=1,IMH
-! South
-      tmp = 0.25*(p(i,2) - p(i+imh,2))
-      Pmax = max(p(i,2),p(i,1), p(i+imh,2)) - p(i,1)
-      Pmin = p(i,1) - min(p(i,2),p(i,1), p(i+imh,2))
-      DC(i,1)=sign(min(abs(tmp),Pmax,Pmin),tmp)
-! North.
-      tmp = 0.25*(p(i+imh,JMR) - p(i,JMR))
-      Pmax = max(p(i+imh,JMR),p(i,jnp), p(i,JMR)) - p(i,JNP)
-      Pmin = p(i,JNP) - min(p(i+imh,JMR),p(i,jnp), p(i,JMR))
-      DC(i,JNP) = sign(min(abs(tmp),Pmax,pmin),tmp)
-20    continue
- 
-! Scalars:
-      do 25 i=imh+1,IMR
-      DC(i,  1) =  - DC(i-imh,  1)
-      DC(i,JNP) =  - DC(i-imh,JNP)
-25    continue
+ !****6***0*********0*********0*********0*********0*********0**********72
+	SUBROUTINE viscos(ta,im,jm,nl,	 &
+				mu)
+	
+! 	Calculate the viscosity of the bulk gas (molecular nitrogen, N2)
+!****6***0*********0*********0*********0*********0*********0**********72
+	
+	IMPLICIT NONE
+	
+! Dimensions of arrays
 
-      return
-      end
- 
+	INTEGER,INTENT(IN) :: im,jm,nl ! Length of x, y, and z dimensions
+	
+! Define arrays
+
+	REAL,INTENT(IN) :: ta(im,jm,nl) ! Air temperature
+	REAL,INTENT(OUT) :: mu(im,jm,nl) ! Viscosity
+	
+! Define constants
+
+	REAL :: kb ! Boltzmann constant
+	REAL :: mair ! Molecular mass of bulk gas
+	REAL :: dair ! Molecular diameter of bulk gas
+	REAL :: eps ! Lennard-Jones potential well of N2
+	REAL :: PI ! Value of pi
+	
+	kb = 1.380649E-23 ! m2 kg s-2 K-1
+	mair = 4.652E-26 ! kg
+	dair = 3.64E-10 ! m
+	eps = 95.5 ! K
+	PI = 3.14159
+	
+!---------------------------------------------------------------
+! Calculation
+	
+	mu = (5./16.)*(1./1.22)*(1./PI)*SQRT(PI*ta*mair)*(SQRT(kb)/(dair**2))*((ta/eps)**(0.16))
+			
+	RETURN
+	END
+	
+
+	
+	!****6***0*********0*********0*********0*********0*********0**********72
+	SUBROUTINE chamfac(ta,im,jm,nl,delp,ps,apart,	 &
+						beta)
+	
+! 	Calculate the Cunningham factor used in terminal velocity calculation
+!****6***0*********0*********0*********0*********0*********0**********72
+
+	IMPLICIT NONE
+
+! Dimensions of arrays
+
+	INTEGER,INTENT(IN) :: im,jm,nl ! Length of x, y, and z dimensions
+	
+! Define inputs and outputs
+
+	REAL,INTENT(IN) :: ta(im,jm,nl) ! Air temperature
+	REAL,INTENT(IN) :: delp(im,jm,nl) ! Pressure/layer thickness
+	REAL,INTENT(IN) :: ps(im,jm,nl) ! Surface air pressure
+	REAL,INTENT(OUT) :: beta(im,jm,nl) ! Cunningham factor (calculated in chamfac subroutine)
+	
+! Local arrays
+	REAL :: lambda(im,jm,nl) ! Mean free path
+	REAL :: air_pres(im,jm,nl) ! Air pressure 
+	REAL :: kn(im,jm,nl) ! Knudsen number
+	
+! Define constants
+
+	REAL :: kb ! Boltzmann constant
+	REAL :: rad ! Molecular radius of N2
+	REAL :: PI ! Value of pi
+	REAL :: apart ! Particle radius
+	
+	kb = 1.380649E-23 ! J/K
+	rad = 0.5*3.64E-10 ! m
+	PI = 3.14159
+
+
+	!---------------------------------------------------------------
+! Calculation of mean free path of the bulk gas
+
+	air_pres = ps*sigma
+	lambda = (kb/rad)*(ta/air_pres)*(1/(4.*PI*rad))
+	
+! Calculation of Cunningham factor
+
+	kn = lambda/apart ! Knudsen number
+	beta = 1 + kn*(1.256 + 0.4*EXP(-1.1/kn))
+	
+	
+	RETURN
+	END
+
+
+	!****6***0*********0*********0*********0*********0*********0**********72
+	SUBROUTINE vterm(im,jm,nl,beta,apart,rho,rhop,mu,	 &
+					ta,sigma,ps,vels)
+	
+! 	Calculate the terminal velocity of aerosol particles in the vertical direction
+!****6***0*********0*********0*********0*********0*********0**********72
+
+	IMPLICIT NONE
+
+! Dimensions of arrays
+	
+	INTEGER,INTENT(IN) :: im,jm,nl ! Length of x, y, and z dimensions
+	
+! Define arrays
+
+	REAL,INTENT(INOUT) :: beta(im,jm,nl) ! Cunningham factor
+	REAL,INTENT(IN) :: rho(im,jm,nl) ! Air density
+	REAL,INTENT(IN) :: mu(im,jm,nl) ! Viscosity
+	REAL,INTENT(IN) :: ta(im,jm,nl) ! Temperature array
+	REAL,INTENT(IN) :: sigma(im,jm,nl) ! Sigma array
+	REAL,INTENT(IN) :: ps(im,jm,nl) ! Surface air pressure
+	REAL,INTENT(OUT) :: vels(im,jm,nl) ! Terminal velocity
+
+! Define constants
+
+	REAL :: apart ! Aerosol particle radius
+	REAL :: rhop ! Density of aerosol particle
+	REAL :: g ! Gravity
+	
+	g = 10.9 ! m/s2, gravitational constant for ProxB
+	
+	call chamfac(ta,im,jm,nl,sigma,ps,apart,beta)
+	CONTINUE
+	
+	vels = 2*beta*apart**2*g*(rhop - rho)/(9*mu)
+	
+	RETURN
+	END
+	
+	
+!****6***0*********0*********0*********0*********0*********0**********72
+	SUBROUTINE gsettle(mmr,im,jm,nl,delp,vterm)
+	
+! 	Calculate mass mixing ratio of haze particles at each timestep
+!****6***0*********0*********0*********0*********0*********0**********72
+
+	IMPLICIT NONE
+
+! Dimensions of arrays
+	
+	INTEGER,INTENT(IN) :: im,jm,nl ! Length of x, y, and z dimensions
+	
+! Define arrays
+	
+	REAL,INTENT(IN) :: rho(im,jm,nl)
+	REAL,INTENT(INOUT) :: vterm(im,jm,nl)
+	REAL,INTENT(INOUT) :: q(im,jm,nl)
+	
+	DO k=1,nl
+		q(:,:,k) = rho(:,:,k+1)*q(:,:,k+1)*vterm(:,:,k+1) -
+	
+	
+	
+	RETURN
+	END
+
+	
