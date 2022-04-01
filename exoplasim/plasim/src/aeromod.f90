@@ -41,6 +41,7 @@
 										 
 	  real,parameter :: apart = 50e-06 ! Radius of aerosol particle in meters
 	  real,parameter :: rhop = 1000 ! Density of aerosol particle in kg/m3
+	  real,parameter :: fcoeff = 10e-13 ! Haze particle mass production rate in kg/m2s
 
       end module aeromod
 
@@ -53,7 +54,7 @@
 
       use pumamod, only: du,dv,dp,du0,dv0,dp0,daeros, &
                          NLON,NLAT,NLEV,NAERO,       &
-                         mypid,NROOT,sigmah
+                         mypid,NROOT,sigmah,dt
       use tracermod,aeromod
       implicit none
 
@@ -92,9 +93,9 @@
     
       if (mypid == NROOT) then
 
-         call aerocore(daeros,l_aero,sigmah,              &
+         call aerocore(daeros,l_aero,sigmah,dt,           &
                       zps0,zps1,zu,zv,                    &
-                      dtoa,dtdx,apart,rhop,               &
+                      dtoa,dtdx,apart,rhop,fcoeff         &
                       aero_iord,aero_jord,aero_kord,      & 
                       NAERO,NLON,NLAT,NLEV,dap,dbk,       &
                       iml,aero_j1,aero_j2,js0,jn0,        &

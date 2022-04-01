@@ -267,6 +267,7 @@
       real ::  st(NESP,NLEV) = 0.0 ! Spectral Temperature
       real ::  sz(NESP,NLEV) = 0.0 ! Spectral Vorticity
       real ::  sq(NESP,NLEV) = 0.0 ! Spectral Specific Humidity
+	  real ::  smmr(NESP,NLEV) = 0.0 ! Spectral aerosol mmr
       real ::  sp(NESP)      = 0.0 ! Spectral Pressure (ln Ps)
       real ::  so(NESP)      = 0.0 ! Spectral Orography
       real ::  sr(NESP,NLEV) = 0.0 ! Spectral Restoration Temperature
@@ -298,6 +299,7 @@
       real :: sak(NESP,NLEV)   = 0.0 ! horizontal diffusion
       real :: sakpp(NSPP,NLEV) = 0.0 ! horizontal diffusion partial
       real :: sqout(NESP,NLEV) = 0.0 ! specific humidity for output
+	  real :: mmrout(NESP,NLV) = 0.0 ! aerosol mass mixing ratio for output
       real :: spnorm(NESP)     = 0.0 ! Factors for output normalization
 
       integer :: nindex(NESP) = NTRU ! Holds wavenumber
@@ -327,6 +329,7 @@
       real :: gt(NHOR,NLEV)   = 0. ! temperature (-t0)
       real :: gz(NHOR,NLEV)   = 0. ! absolut vorticity
       real :: gq(NHOR,NLEV)   = 0. ! spec. humidity
+	  real :: gmmr(NHOR,NLEV) = 0. ! aerosol mmr
       real :: gu(NHOR,NLEV)   = 0. ! zonal wind (*cos(phi))
       real :: gv(NHOR,NLEV)   = 0. ! meridional wind (*cos(phi))
       real :: gtdt(NHOR,NLEV) = 0. ! t-tendency
@@ -344,6 +347,7 @@
 
       real :: dt(NHOR,NLEP)   = 0.     ! temperature 
       real :: dq(NHOR,NLEP)   = 0.     ! spec. humidity
+	  real :: mmr(NHOR,NLEP)  = 0.     ! mass mixing ratio of aerosol
       real :: du(NHOR,NLEP)   = 0.     ! zonal wind [m/s]
       real :: dv(NHOR,NLEP)   = 0.     ! meridional wind [m/s]
       real :: dp(NHOR)        = 0.     ! surface pressure

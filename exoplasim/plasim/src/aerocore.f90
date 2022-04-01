@@ -5,13 +5,13 @@
 !=======================================================================
 !
 !****6***0*********0*********0*********0*********0*********0**********72
-      subroutine aerocore(mmr,l_aero,sigmah,ps1,ps2,  &
-                        u,v,dtoa,dtdx,apart,rhop,     &
-                        iord,jord,kord,               &
-                        naero,im,jm,nl,dap,dbk,       &
-                        iml,j1,j2,js0,jn0,            &
-                        cose,cosp,acosp,dlat,rcap,    &
-                        cnst,deform,zcross,           &
+      subroutine aerocore(mmr,l_aero,sigmah,temp,ps1,ps2, &
+                        u,v,dtoa,dtdx,apart,rhop,fcoeff,  &
+                        iord,jord,kord,                   &
+                        naero,im,jm,nl,dap,dbk,           &
+                        iml,j1,j2,js0,jn0,                &
+                        cose,cosp,acosp,dlat,rcap,        &
+                        cnst,deform,zcross,               &
                         fill,mfct,debug,nud)
 !****6***0*********0*********0*********0*********0*********0**********72
 !
@@ -247,6 +247,7 @@
 ! Alternatively, one can use the MFCT option to enforce monotonicity.
 !
 	  use pumamod, only: ga ! Use planet's gravity from pumamod (plasimmod.f90)
+	  use radmod, only: zmu1 ! Cosine of solar zenith angle from radmod; used to define haze production profile at top level
       implicit none
 
 ! Input-Output variables
@@ -262,9 +263,11 @@
       real,intent(inout) ::   u(im,jm,nl) ! Zonal wind at t+dt/2
       real,intent(inout) ::   v(im,jm,nl) ! Meridional wind at t+dt/2
       real,intent(in)    ::  dtdx(jm), dtoa ! Ratio of timestep to zonal grid step; ratio of timestep to planetary radius
-	  real,intent(in)    :: sigmah(nl) !
+	  real,intent(in)    :: sigmah(nl) ! Sigma at half level
+	  real,intent(in)    :: temp(im,jm,nl) ! Air temperature (dt in plasimmod)
 	  real,intent(in)    :: apart ! Particle radius
 	  real,intent(in)    :: rhop ! Particle density
+	  real,intent(in)    :: fcoeff ! Haze mass production rate at solar zenith in kg/m2s
 
       real,intent(in)    :: cose(jm+1),cosp(jm), acosp(jm), dlat(jm), rcap ! Geometric factors calculated in tracer_ini subroutine in tracermod
       real,intent(in)    :: dap(nl), dbk(nl) ! Coefficients which control layer thickness for different height schemes (pure sigma, hybrid)
@@ -603,6 +606,13 @@
 !MIC$* shared(CRX,CRY,PU,xmass,ymass,fx,fy,acosp,rcap,qz)
 !MIC$* private(i,j,k,jt,wk,DG2)
 
+      select case (l_aero) ! Choose your aerosol source
+      case(1) ! Case 1: photochemical haze
+	    mmr(:,:,1,ic) = fcoeff*zmu1 ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
+      case(2) ! Case 2: dust
+        write('Dust source not added yet') ! mmr(:,:,nl,ic) = fcoeff*[land gridpoints]
+      end select
+
       do 2500 k=1,nl ! Vertical levels loop
 
 ! for the polar caps: replace the mixing ratio at the northest (southest)
@@ -711,14 +721,42 @@
 !MIC$ do all autoscope
 !MIC$* private(i,j,k,sum1,sum2)
 
-      do 101 k=1,NL ! For all levels
+! For k=1, only subtract the flux due to downward settling (plus all the advection fluxes)
+	  do j=j1,j2 
+		do i=1,IM
+			daero(i,j,1) = daero(i,j,1) +  fx(i,j,1) - fx(i+1,j,1)                   &
+                            + (fy(i,j,1) - fy(i,j+1,1))*acosp(j)/dlat(j) &
+                            +  fz(i,j,1) - fz(i,j,2) &
+							- gz(i,j,1)*ga
+		enddo ! Lon loop
+	  enddo ! Lat loop
+	  
+      ! poles:
+      sum1 = fy(IM,j1  ,1) ! fy at last lon, southernmost lat, level k
+      sum2 = fy(IM,J2+1,1) ! fy at last lon, northernmost lat, level k
+
+      do i=1,IM-1 ! For all other lons
+      sum1 = sum1 + fy(i,j1  ,1) ! Add fy for last lon at southernmost lat
+      sum2 = sum2 + fy(i,J2+1,1) ! Add fy for last lon at northernmost lat
+      enddo
+ 
+      daero(1, 1,1) = daero(1, 1,1) - sum1*RCAP + fz(1, 1,1) - fz(1, 1,2) ! First lon, southernmost lat
+      daero(1,JM,1) = daero(1,JM,1) + sum2*RCAP + fz(1,JM,1) - fz(1,JM,2) ! First lon, northernmost lat
+ 
+      do i=2,IM ! All other lons except first
+      daero(i, 1,1) = daero(1, 1,1) ! At southernmost lat, daero is equal to daero at first lon
+      daero(i,JM,1) = daero(1,JM,1) ! At northernmost lat, daero is equal to daero at first lon
+      enddo							
+
+! For all levels except the top and bottom, add flux from level above and subtract flux falling out of current level
+      do 101 k=2,NL-1 
 
       do 425 j=j1,j2 ! Between the caps
       do 425 i=1,IM ! For all lons
       daero(i,j,k) = daero(i,j,k) +  fx(i,j,k) - fx(i+1,j,k)                   &
                             + (fy(i,j,k) - fy(i,j+1,k))*acosp(j)/dlat(j) &
                             +  fz(i,j,k) - fz(i,j,k+1) &
-							+ (gz(i,j,k) - gz(i,j,k+1))*ga
+							+ (gz(i,j,k-1) - gz(i,j,k))*ga							
 425   continue
  
 ! poles:
@@ -739,6 +777,34 @@
       enddo
 
 101   continue
+
+! Now for k=nl, only add the flux coming from the level above
+	  do j=j1,j2 
+		do i=1,IM
+			daero(i,j,nl) = daero(i,j,nl) +  fx(i,j,nl) - fx(i+1,j,nl)                   &
+                            + (fy(i,j,nl) - fy(i,j+1,nl))*acosp(j)/dlat(j) &
+                            +  fz(i,j,nl) - fz(i,j,nl+1) &
+							+ gz(i,j,nl-1)*ga
+		enddo ! Lon loop
+	  enddo ! Lat loop
+	  
+      ! poles:
+      sum1 = fy(IM,j1  ,nl) ! fy at last lon, southernmost lat, level k
+      sum2 = fy(IM,J2+1,nl) ! fy at last lon, northernmost lat, level k
+
+      do i=1,IM-1 ! For all other lons
+      sum1 = sum1 + fy(i,j1  ,nl) ! Add fy for last lon at southernmost lat
+      sum2 = sum2 + fy(i,J2+1,nl) ! Add fy for last lon at northernmost lat
+      enddo
+ 
+      daero(1, 1,nl) = daero(1, 1,nl) - sum1*RCAP + fz(1, 1,nl) - fz(1, 1,nl+1) ! First lon, southernmost lat
+      daero(1,JM,nl) = daero(1,JM,nl) + sum2*RCAP + fz(1,JM,nl) - fz(1,JM,nl+1) ! First lon, northernmost lat
+ 
+      do i=2,IM ! All other lons except first
+      daero(i, 1,nl) = daero(1, 1,nl) ! At southernmost lat, daero is equal to daero at first lon
+      daero(i,JM,nl) = daero(1,JM,nl) ! At northernmost lat, daero is equal to daero at first lon
+      enddo							
+
  
 !****6***0*********0*********0*********0*********0*********0**********72
       if(FILL) call qckxyz(DQ,DG2,IM,JM,NL,j1,j2,cosp,acosp,IC)
@@ -763,6 +829,9 @@
       case(2)
         mmr(:,:,:,IC) = daero(:,:,:) / delp2dyn(:,:,:)
       end select
+
+! Finally, put in a sink term at the bottom level to avoid infinite build-up of haze particles	  
+	  mmr(:,:,nl,ic) = mmr(:,:,nl,ic)*10e-3
 
 5000  continue !tracer loop
 
@@ -911,8 +980,6 @@
 
 	REAL :: apart ! Aerosol particle radius
 	REAL :: rhop ! Density of aerosol particle
-	
-	rhop = 1000 ! kg/m3
 	
 	vels = 2*beta*(apart**2)*ga*(rhop - delp)/(9*mu)
 	
