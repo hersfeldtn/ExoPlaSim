@@ -530,6 +530,7 @@
       real :: aasd(NESP,NLEV)     = 0.
       real :: aasz(NESP,NLEV)     = 0.
       real :: aadq(NHOR,NLEP)     = 0.
+	  real :: aammr(NHOR,NLEP)    = 0. ! Accumulated aerosol mmr 
       real :: aadmld(NHOR)        = 0.
       real :: aadt(NHOR,NLEP)     = 0.
       real :: aadwatc(NHOR)       = 0.
