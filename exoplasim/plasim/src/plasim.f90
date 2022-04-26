@@ -3263,7 +3263,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 	  
 !	  i) aerosol module
 
-	  call aero_main
+	  if (NAERO > 0) call aero_main
       
       
 

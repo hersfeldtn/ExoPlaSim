@@ -299,7 +299,7 @@
       real :: sak(NESP,NLEV)   = 0.0 ! horizontal diffusion
       real :: sakpp(NSPP,NLEV) = 0.0 ! horizontal diffusion partial
       real :: sqout(NESP,NLEV) = 0.0 ! specific humidity for output
-	  real :: mmrout(NESP,NLV) = 0.0 ! aerosol mass mixing ratio for output
+	  real :: mmrout(NESP,NLEV) = 0.0 ! aerosol mass mixing ratio for output
       real :: spnorm(NESP)     = 0.0 ! Factors for output normalization
 
       integer :: nindex(NESP) = NTRU ! Holds wavenumber
