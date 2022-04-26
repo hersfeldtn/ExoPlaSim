@@ -18,7 +18,7 @@
 
       use pumamod, only: NLAT,NLEV,nud
 
-      logical,parameter :: aero_debug  = .false.
+      logical,parameter :: aero_debug  = .true.
       logical,parameter :: aero_zcross = .true.
       logical,parameter :: aero_deform = .false.
 
@@ -55,7 +55,8 @@
       use pumamod, only: du,dv,dp,du0,dv0,dp0,daeros, &
                          NLON,NLAT,NLEV,NAERO,       &
                          mypid,NROOT,sigmah,dt
-      use tracermod,aeromod
+      use tracermod
+	  use aeromod
       implicit none
 
       real :: zu   (NLON,NLAT,NLEV)
@@ -95,7 +96,7 @@
 
          call aerocore(daeros,l_aero,sigmah,dt,           &
                       zps0,zps1,zu,zv,                    &
-                      dtoa,dtdx,apart,rhop,fcoeff         &
+                      dtoa,dtdx,apart,rhop,fcoeff,         &
                       aero_iord,aero_jord,aero_kord,      & 
                       NAERO,NLON,NLAT,NLEV,dap,dbk,       &
                       iml,aero_j1,aero_j2,js0,jn0,        &

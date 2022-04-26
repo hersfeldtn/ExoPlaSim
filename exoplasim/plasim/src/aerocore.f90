@@ -247,7 +247,7 @@
 ! Alternatively, one can use the MFCT option to enforce monotonicity.
 !
 	  use pumamod, only: ga ! Use planet's gravity from pumamod (plasimmod.f90)
-	  use radmod, only: zmu1 ! Cosine of solar zenith angle from radmod; used to define haze production profile at top level
+	  use radmod, only: gmu0 ! Use cosine of solar zenith angle from radmod; used to define haze production profile at top level
       implicit none
 
 ! Input-Output variables
@@ -593,7 +593,7 @@
 ! Calculate terminal velocity, store as vels (3D)
 !****6***0*********0*********0*********0*********0*********0**********72
 	
-	call vterm(im,jm,nl,beta,apart,delp2,rhop,mu,temp,sigmah,ps2,vels)
+	call vterm(im,jm,nl,beta,apart,delp2,rhop,mu,temp,sigmah,ps2,vels)	
 
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Do transport one tracer at a time.
@@ -608,9 +608,10 @@
 
       select case (l_aero) ! Choose your aerosol source
       case(1) ! Case 1: photochemical haze
-	    mmr(:,:,1,ic) = fcoeff*zmu1 ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
+	    call solang ! Use subroutine from radmod to calculate solar zenith angle
+	    mmr(:,:,1,ic) = fcoeff*gmu0 ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
       case(2) ! Case 2: dust
-        write('Dust source not added yet') ! mmr(:,:,nl,ic) = fcoeff*[land gridpoints]
+        write(l_aero,*) 'Source * (dust) not added yet' ! mmr(:,:,nl,ic) = fcoeff*[land gridpoints]
       end select
 
       do 2500 k=1,nl ! Vertical levels loop
@@ -807,7 +808,7 @@
 
  
 !****6***0*********0*********0*********0*********0*********0**********72
-      if(FILL) call qckxyz(DQ,DG2,IM,JM,NL,j1,j2,cosp,acosp,IC)
+      if(FILL) call qckxyz(daero,DG2,IM,JM,NL,j1,j2,cosp,acosp,IC)
 !****6***0*********0*********0*********0*********0*********0**********72
  
 !MIC$ do all
@@ -837,7 +838,7 @@
 
       if (debug) then
          write(nud,*) '* Leaving routine aerocore'
-         do ic=1,nc
+         do ic=1,naero
             write(nud,*) '* tracer',ic,'* max. & min. q =', &
                        maxval(mmr(:,:,:,ic)),minval(mmr(:,:,:,ic))
          end do
