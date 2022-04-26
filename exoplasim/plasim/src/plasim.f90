@@ -3260,6 +3260,10 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 !
       
       call hurricanestep
+	  
+!	  i) aerosol module
+
+	  call aero_main
       
       
 
