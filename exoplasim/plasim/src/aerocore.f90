@@ -252,7 +252,7 @@
 
 ! Input-Output variables
 
-      integer,intent(in) :: naero,im,jm,nl,iml,j1,j2,js0,jn0 ! Input variable passed from other modules
+      integer,intent(in) :: naero,im,jm,nl,iml,j1,j2,js0,jn0 ! Input variables passed from other modules
       integer,intent(in) :: iord,jord,kord,cnst,l_aero
 
 ! Input-Output arrays
@@ -609,7 +609,9 @@
       select case (l_aero) ! Choose your aerosol source
       case(1) ! Case 1: photochemical haze
 	    call solang ! Use subroutine from radmod to calculate solar zenith angle
-	    mmr(:,:,1,ic) = fcoeff*gmu0 ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
+		do i=i,im ! Loop through longitudes
+			mmr(:,i,1,ic) = fcoeff*gmu0 ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
+		enddo
       case(2) ! Case 2: dust
         write(l_aero,*) 'Source * (dust) not added yet' ! mmr(:,:,nl,ic) = fcoeff*[land gridpoints]
       end select
