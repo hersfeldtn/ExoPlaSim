@@ -294,7 +294,7 @@
 
 ! scalars
 
-      integer :: imh, i,j,k,jt,ic,nud ! nud = I/O unit for diagnostic output, defined in pumamod
+      integer :: imh,i,j,k,jt,ic,nud ! nud = I/O unit for diagnostic output, defined in pumamod
       real    :: d5, dtoa5, sum1, sum2 ! Values calculated below
 
 !---------------------------------------------------------------
@@ -361,7 +361,7 @@
       endif
 111   continue
 112   continue
- 
+
       do 122 j=jn0,j2-1 ! For these lats
       do 122 i=1,im ! For all lons
       if(abs(crx(i,j,k)) .gt. 1.) then 

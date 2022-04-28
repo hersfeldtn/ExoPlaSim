@@ -205,11 +205,11 @@
       integer :: nener3d  = 0   ! switch for 3d energy diagnostics
       integer :: ndheat   = 1   ! switch for heating due to momentum dissipation
       integer :: nseedlen = 0   ! length of random seed (set by lib call)
-      integer :: nsela    = 0   ! enable (1) or disable (0) Semi Lagrangian Advection
+      integer :: nsela    = 1   ! enable (1) or disable (0) Semi Lagrangian Advection
       integer :: nspinit  = 0   ! switch for LnPs initialization
       integer :: nsponge  = 0   ! switch for top sponge layer
       integer :: nstratosponge = 0 ! Switch for Newtonian cooling in hybrid stratosphere
-      integer :: nqspec   = 1   ! 1: spectral q   0: gridpoint q (semi-Langrangian)
+      integer :: nqspec   = 0   ! 1: spectral q   0: gridpoint q (semi-Langrangian)
       integer :: nrdrag   = 0   ! 1: Apply Rayleigh fraction to 20-layer atmosphere
 !>>> AYP -- NEEDED AS PART OF GLACIERMOD      
       integer :: nglspec = 0

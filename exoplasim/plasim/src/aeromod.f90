@@ -35,8 +35,8 @@
       integer,parameter :: aero_cnst = 1   ! 1 = constant preserving
                                            ! 2 = mass conserving
 
-      integer,parameter :: aero_j1  = 2  ! 1st lat. outside polar cap
-      integer,parameter :: aero_j2  = NLAT + 1 - aero_j1 
+!      integer,parameter :: aero_j1  = 2  ! 1st lat. outside polar cap
+!      integer,parameter :: aero_j2  = NLAT + 1 - aero_j1 
                                          ! last lat. outside polar cap
 										 
 	  real,parameter :: apart = 50e-06 ! Radius of aerosol particle in meters
@@ -94,12 +94,12 @@
     
       if (mypid == NROOT) then
 
-         call aerocore(daeros,l_aero,sigmah,dt,           &
+         call aerocore( daeros,l_aero,sigmah,dt,          &
                       zps0,zps1,zu,zv,                    &
-                      dtoa,dtdx,apart,rhop,fcoeff,         &
+                      dtoa,dtdx,apart,rhop,fcoeff,        &
                       aero_iord,aero_jord,aero_kord,      & 
                       NAERO,NLON,NLAT,NLEV,dap,dbk,       &
-                      iml,aero_j1,aero_j2,js0,jn0,        &
+                      iml,ffsl_j1,ffsl_j2,js0,jn0,        &
                       colae,colad,rcolad,dlat,rcap,       &
                       aero_cnst,aero_deform,aero_zcross,  &
                       aero_fill,aero_mfct,aero_debug,nud)
