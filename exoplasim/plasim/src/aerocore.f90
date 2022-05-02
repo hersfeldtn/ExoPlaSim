@@ -579,6 +579,8 @@
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Calculate viscosity of bulk gas, store as mu (3D)
 !****6***0*********0*********0*********0*********0*********0**********72
+	write(nud,*) 'Air temperature max: ',maxval(temp)
+	write(nud,*) 'Air temperature min: ',minval(temp)	
 	
 	call viscos(temp,im,jm,nl,mu)
 	

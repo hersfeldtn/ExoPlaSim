@@ -3110,7 +3110,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 !
 !     tracer transport
 !
-      if (nsela > 0 .and. nkits == 0) then
+      if (nsela > 0 .and. nkits == 0) then	  
        if (nqspec == 0) then
         dqt(:,:) = dq(:,:) ! Save old value of q
         call mpgagp(zgq,dq,NLEV)
@@ -3129,7 +3129,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
         endif ! mypid
         call mpscgp(zgq,dq,NLEV)
         dqt(:,:) = (dq(:,:) - dqt(:,:)) / deltsec !  q advection term
-       endif ! nqspec
+       endif ! nqspec	  
       endif ! nkits
       call guihor("DQ" // char(0),dq,NLEV,1000.0,0.0)
 
@@ -3262,10 +3262,13 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call hurricanestep
 	  
 !	  i) aerosol module
-
-	  if (NAERO > 0) call aero_main
-      
-      
+	  
+      if (nsela > 0 .and. nkits == 0) then
+	  write(nud,*) 'nkits= ',nkits
+		if (NAERO > 0) then
+			call aero_main
+		endif
+	  endif     
 
 !
 !     END OF PARAMETERISATION ROUTINES

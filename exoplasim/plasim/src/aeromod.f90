@@ -18,12 +18,12 @@
 
       use pumamod, only: NLAT,NLEV,nud
 
-      logical,parameter :: aero_debug  = .true.
-      logical,parameter :: aero_zcross = .true.
-      logical,parameter :: aero_deform = .false.
+      logical,parameter :: aero_debug  = .TRUE.
+      logical,parameter :: aero_zcross = .TRUE.
+      logical,parameter :: aero_deform = .FALSE.
 
-      logical,parameter :: aero_fill = .false.
-      logical,parameter :: aero_mfct = .false.
+      logical,parameter :: aero_fill = .FALSE.
+      logical,parameter :: aero_mfct = .FALSE.
 
       integer,parameter :: aero_iord = 2
       integer,parameter :: aero_jord = 2
@@ -77,7 +77,7 @@
                          du0,dv0,dp0,du,dv,dp)   ! input
 
       if (mypid == NROOT .and. aero_debug) then
-         write(nud,'(a,f11.2)') '* max u   =',maxval(abs(zu))
+         write(nud,'(a,f11.2)') '* max aero u   =',maxval(abs(zu))
          write(nud,'(a,f11.2)') '* max v   =',maxval(abs(zv))
          write(nud,'(a,f11.2)') '* max ps0 =',maxval(zps0)
          write(nud,'(a,f11.2)') '* max ps1 =',maxval(zps1)
