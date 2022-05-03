@@ -5,10 +5,10 @@
 !=======================================================================
 !
 !****6***0*********0*********0*********0*********0*********0**********72
-      subroutine aerocore(mmr,l_aero,sigmah,temp,ps1,ps2, &
+      subroutine aerocore(mmr,l_aero,sigmah,dt,ps1,ps2, &
                         u,v,dtoa,dtdx,apart,rhop,fcoeff,  &
                         iord,jord,kord,                   &
-                        naero,im,jm,nl,dap,dbk,           &
+                        NAERO,im,jm,nl,dap,dbk,           &
                         iml,j1,j2,js0,jn0,                &
                         cose,cosp,acosp,dlat,rcap,        &
                         cnst,deform,zcross,               &
@@ -252,22 +252,22 @@
 
 ! Input-Output variables
 
-      integer,intent(in) :: naero,im,jm,nl,iml,j1,j2,js0,jn0 ! Input variables passed from other modules
+      integer,intent(in) :: NAERO,im,jm,nl,iml,j1,j2,js0,jn0 ! Input variables passed from other modules
       integer,intent(in) :: iord,jord,kord,cnst,l_aero
 
 ! Input-Output arrays
 
-      real,intent(inout) ::   mmr(im,jm,nl,naero) ! Mixing ratio of aerosol
+      real,intent(inout) ::   mmr(im,jm,nl,NAERO) ! Mixing ratio of aerosol
       real,intent(inout) :: ps1(im,jm) ! Surface pressure at time t
       real,intent(inout) :: ps2(im,jm)! Surface pressure at time t+dt
       real,intent(inout) ::   u(im,jm,nl) ! Zonal wind at t+dt/2
       real,intent(inout) ::   v(im,jm,nl) ! Meridional wind at t+dt/2
       real,intent(in)    ::  dtdx(jm), dtoa ! Ratio of timestep to zonal grid step; ratio of timestep to planetary radius
 	  real,intent(in)    :: sigmah(nl) ! Sigma at half level
-	  real,intent(in)    :: temp(im,jm,nl) ! Air temperature (dt in plasimmod)
+	  real,intent(in)    :: dt(im,jm,nl) ! Air temperature (dt in plasimmod)
 	  real,intent(in)    :: apart ! Particle radius
 	  real,intent(in)    :: rhop ! Particle density
-	  real,intent(in)    :: fcoeff ! Haze mass production rate at solar zenith in kg/m2s
+	  real,intent(in)    :: fcoeff ! Haze mass production rate at solar zenith in kg/m2/s
 
       real,intent(in)    :: cose(jm+1),cosp(jm), acosp(jm), dlat(jm), rcap ! Geometric factors calculated in tracer_ini subroutine in tracermod
       real,intent(in)    :: dap(nl), dbk(nl) ! Coefficients which control layer thickness for different height schemes (pure sigma, hybrid)
@@ -291,6 +291,7 @@
 	  real ::	mu(im,jm,nl) ! Viscosity of bulk gas calculated by viscos subroutine
 	  real ::   beta(im,jm,nl) ! Cunningham factor used in terminal velocity, calculated by chamfac subroutine
 	  real ::   vels(im,jm,nl) ! Terminal velocity of falling aerosol particles
+	  real ::	temp(im,jm,nl) ! Local temperature array, remove negative values and replace with 0 to avoid errors
 
 ! scalars
 
@@ -298,8 +299,8 @@
       real    :: d5, dtoa5, sum1, sum2 ! Values calculated below
 
 !---------------------------------------------------------------
-
-      imh      = im/2 ! Number of longitudes divided by 2
+	  
+	  imh      = im/2 ! Number of longitudes divided by 2
       dtdx5(:) = 0.5*dtdx(:) ! Ratio of timestep to zonal grid step divided by 2
       dtoa5    = 0.5*dtoa ! Ratio of timestep to planetary radius divided by 2
 
@@ -575,27 +576,27 @@
 
       enddo !vertical layer loop
 
+
+    temp = dt
+	where(temp .le. 1.0) temp = 1.0
 	  
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Calculate viscosity of bulk gas, store as mu (3D)
 !****6***0*********0*********0*********0*********0*********0**********72
-	write(nud,*) 'Air temperature max: ',maxval(temp)
-	write(nud,*) 'Air temperature min: ',minval(temp)	
-	
-	call viscos(temp,im,jm,nl,mu)
+
+	call viscos(temp,im,jm,nl,nud,mu)
 	
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Calculate Cunningham factor, store as beta (3D)
 !****6***0*********0*********0*********0*********0*********0**********72
-	
-	
-	call chamfac(temp,im,jm,nl,sigmah,ps2,apart,beta)
+		
+	call chamfac(temp,im,jm,nl,sigmah,ps2,apart,nud,beta)
 	
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Calculate terminal velocity, store as vels (3D)
 !****6***0*********0*********0*********0*********0*********0**********72
 	
-	call vterm(im,jm,nl,beta,apart,delp2,rhop,mu,temp,sigmah,ps2,vels)	
+	call vterm(im,jm,nl,beta,apart,delp2,rhop,mu,temp,sigmah,ps2,nud,vels)	
 
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Do transport one tracer at a time.
@@ -617,8 +618,8 @@
       case(2) ! Case 2: dust
         write(l_aero,*) 'Source * (dust) not added yet' ! mmr(:,:,nl,ic) = fcoeff*[land gridpoints]
       end select
-
-      do 2500 k=1,nl ! Vertical levels loop
+      
+	  do 2500 k=1,nl ! Vertical levels loop
 
 ! for the polar caps: replace the mixing ratio at the northest (southest)
 ! latitude with the zonal mean. 
@@ -676,17 +677,23 @@
 99    qz(i,j,k) = mmr(i,j,k,IC)
 
       endif
+	  
+	  write(nud,*)'We are in level =',k
  
-2500  continue     ! k-loop
+2500  continue     ! end of k-loop
+
  
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Compute fluxes in the vertical direction
       call FZPPM(qz,fz,IM,JM,NL,daero,W,delp,KORD)
 !****6***0*********0*********0*********0*********0*********0**********72
 
+	  write(nud,*) 'max and min fz =',maxval(fz),minval(fz)
+	  flush(nud)
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Compute vertical flux due to gravitational settling 
-      call gsettle(mmr,im,jm,delp,vels,gz)
+      call gsettle(qz,im,jm,nl,delp,vels,nud,gz)
+	  
 !****6***0*********0*********0*********0*********0*********0**********72
  
       if( MFCT ) then ! Some flux correction if needed
@@ -758,9 +765,9 @@
 
       do 425 j=j1,j2 ! Between the caps
       do 425 i=1,IM ! For all lons
-      daero(i,j,k) = daero(i,j,k) +  fx(i,j,k) - fx(i+1,j,k)                   &
+      daero(i,j,k) = daero(i,j,k) +  fx(i,j,k) - fx(i+1,j,k)             &
                             + (fy(i,j,k) - fy(i,j+1,k))*acosp(j)/dlat(j) &
-                            +  fz(i,j,k) - fz(i,j,k+1) &
+                            +  fz(i,j,k) - fz(i,j,k+1)                   &
 							+ (gz(i,j,k-1) - gz(i,j,k))*ga							
 425   continue
  
@@ -843,7 +850,7 @@
       if (debug) then
          write(nud,*) '* Leaving routine aerocore'
          do ic=1,naero
-            write(nud,*) '* tracer',ic,'* max. & min. q =', &
+            write(nud,*) '* tracer',ic,'* max. & min. mmr =', &
                        maxval(mmr(:,:,:,ic)),minval(mmr(:,:,:,ic))
          end do
       endif
@@ -862,7 +869,7 @@
 !
 
  !****6***0*********0*********0*********0*********0*********0**********72
-	SUBROUTINE viscos(temp,im,jm,nl,	 &
+	SUBROUTINE viscos(temp,im,jm,nl,nud,	 &
 				mu)
 	
 ! 	Calculate the viscosity of the bulk gas (molecular nitrogen, N2)
@@ -873,6 +880,7 @@
 ! Dimensions of arrays
 
 	INTEGER,INTENT(IN) :: im,jm,nl ! Length of x, y, and z dimensions
+	INTEGER,INTENT(IN) :: nud
 	
 ! Define arrays
 
@@ -886,15 +894,31 @@
 	REAL :: dair ! Molecular diameter of bulk gas
 	REAL :: eps ! Lennard-Jones potential well of N2
 	
-	kb = 1.380649E-23 ! m2 kg s-2 K-1
+! Local arrays
+
+	REAL :: rt_temp(im,jm,nl), temp_eps(im,jm,nl)
+	REAL ::	rt_mair, rt_pi, rt_kb, sq_dair, coeff
+	
+	kb = 1.3806E-23 ! m2 kg s-2 K-1
 	mair = 4.652E-26 ! kg
 	dair = 3.64E-10 ! m
 	eps = 95.5 ! K
 	
 !---------------------------------------------------------------
 ! Calculation
+	write(nud,*) 'min temp =', minval(temp)
 	
-	mu = (5./16.)*(1./1.22)*(1./PI)*SQRT(PI*temp*mair)*(SQRT(kb)/(dair**2))*((temp/eps)**(0.16))
+	rt_temp = SQRT(temp)
+	rt_mair = SQRT(mair)
+	rt_pi = SQRT(PI)
+	rt_kb = SQRT(kb)
+	sq_dair = dair**2
+	temp_eps = (temp/eps)*(4/25)
+	coeff = (5./16.)*(1./1.22)*(1./PI)*rt_pi*rt_mair*rt_kb/sq_dair
+	
+	mu = coeff*rt_temp*temp_eps
+	
+! 	mu = (5./16.)*(1./1.22)*(1./PI)*SQRT(PI*abs(temp)*mair)*(SQRT(kb)/(dair**2))*((temp/eps)**(4/25))
 			
 	RETURN
 	END
@@ -902,7 +926,7 @@
 
 	
 	!****6***0*********0*********0*********0*********0*********0**********72
-	SUBROUTINE chamfac(temp,im,jm,nl,sigmah,ps,apart,	 &
+	SUBROUTINE chamfac(temp,im,jm,nl,sigmah,ps,apart,nud,	 &
 						beta)
 	
 ! 	Calculate the Cunningham factor used in terminal velocity calculation
@@ -913,7 +937,7 @@
 
 ! Dimensions of arrays
 
-	INTEGER,INTENT(IN) :: im,jm,nl ! Length of x, y, and z dimensions
+	INTEGER,INTENT(IN) :: im,jm,nl,nud ! Length of x, y, and z dimensions
 	
 ! Define inputs and outputs
 
@@ -926,7 +950,9 @@
 	REAL :: lambda(im,jm,nl) ! Mean free path
 	REAL :: airp(im,jm,nl) ! Air pressure 
 	REAL :: kn(im,jm,nl) ! Knudsen number
+	REAL :: pwer(im,jm,nl) ! Power in exponent
 	INTEGER :: k ! For vertical loop
+	REAL :: coeff
 	
 ! Define constants
 
@@ -934,7 +960,7 @@
 	REAL :: rad ! Molecular radius of N2
 	REAL :: apart ! Particle radius
 	
-	kb = 1.380649E-23 ! J/K
+	kb = 1.3806E-23 ! J/K
 	rad = 0.5*3.64E-10 ! m
 
 	!---------------------------------------------------------------
@@ -946,12 +972,16 @@
 	
 	airp = airp*100 ! Convert to Pa to be in SI units for calculations below
 	
-	lambda = (kb/rad)*(temp/airp)*(1/(4.*PI*rad))
+	coeff = (kb/rad)*(1./(4.*PI*rad))
+	write(nud,*) 'coeff =', coeff
+	lambda = coeff*(temp/airp)
 	
 ! Calculation of Cunningham factor
 
 	kn = lambda/apart ! Knudsen number
-	beta = 1 + kn*(1.256 + 0.4*EXP(-1.1/kn)) ! Cunningham factor	
+	write(nud,*) 'lambda min =',minval(lambda)
+	pwer = -1.1/kn
+	beta = 1. + kn*(1.256 + 0.4*EXP(pwer)) ! Cunningham factor	
 	
 	RETURN
 	END
@@ -959,7 +989,7 @@
 
 	!****6***0*********0*********0*********0*********0*********0**********72
 	SUBROUTINE vterm(im,jm,nl,beta,apart,delp,rhop,mu,	 &
-					temp,sigmah,ps,vels)
+					temp,sigmah,ps,nud,vels)
 	
 ! 	Calculate the terminal velocity of aerosol particles in the vertical direction
 !****6***0*********0*********0*********0*********0*********0**********72
@@ -969,13 +999,13 @@
 
 ! Dimensions of arrays
 	
-	INTEGER,INTENT(IN) :: im,jm,nl ! Length of x, y, and z dimensions
+	INTEGER,INTENT(IN) :: im,jm,nl,nud ! Length of x, y, and z dimensions
 	
 ! Define arrays
 
 	REAL,INTENT(INOUT) :: beta(im,jm,nl) ! Cunningham factor
 	REAL,INTENT(IN) :: delp(im,jm,nl) ! Air density
-	REAL,INTENT(IN) :: mu(im,jm,nl) ! Viscosity
+	REAL,INTENT(INOUT) :: mu(im,jm,nl) ! Viscosity
 	REAL,INTENT(IN) :: temp(im,jm,nl) ! Temperature
 	REAL,INTENT(IN) :: sigmah(nl) ! Sigma
 	REAL,INTENT(IN) :: ps(im,jm,nl) ! Surface air pressure
@@ -986,6 +1016,11 @@
 	REAL :: apart ! Aerosol particle radius
 	REAL :: rhop ! Density of aerosol particle
 	
+	where(mu .le. 0.) mu = 1E-06
+	
+	write(nud,*) 'min viscosity =',minval(mu)
+	write(nud,*) 'min and max beta =',minval(beta),maxval(beta)
+	
 	vels = 2*beta*(apart**2)*ga*(rhop - delp)/(9*mu)
 	
 	RETURN
@@ -993,7 +1028,7 @@
 	
 	
 !****6***0*********0*********0*********0*********0*********0**********72
-	SUBROUTINE gsettle(mmr,im,jm,delp,vterm,gz)
+	SUBROUTINE gsettle(mmr,im,jm,nl,delp,vterm,nud,gz)
 	
 ! 	Calculate vertical flux of haze particles due to gravitational settling at each timestep
 !****6***0*********0*********0*********0*********0*********0**********72
@@ -1002,16 +1037,19 @@
 
 ! Dimensions of arrays
 	
-	INTEGER,INTENT(IN) :: im,jm ! Length of x and y dimensions
+	INTEGER,INTENT(IN) :: im,jm,nl,nud ! Length of x and y dimensions
 	
 ! Define arrays
 	
-	REAL,INTENT(IN) :: delp(im,jm)
-	REAL,INTENT(IN) :: vterm(im,jm)
-	REAL,INTENT(INOUT) :: mmr(im,jm)
-	REAL,INTENT(OUT)   :: gz(im,jm)
+	REAL,INTENT(IN) :: delp(im,jm,nl)
+	REAL,INTENT(IN) :: vterm(im,jm,nl)
+	REAL,INTENT(INOUT) :: mmr(im,jm,nl)
+	REAL,INTENT(OUT)   :: gz(im,jm,nl)
 	
-	gz = delp*mmr*vterm
+	gz = -delp*mmr*vterm
+	write(nud,*) 'min delp, mmr, vterm =', minval(delp),minval(mmr),minval(vterm)
+	write(nud,*) 'max and min gz =', maxval(gz),minval(gz)
+	flush(nud)
 	
 	RETURN
 	END
