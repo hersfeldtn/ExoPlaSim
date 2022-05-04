@@ -182,7 +182,7 @@
       integer :: nadv     =  1  ! advection 1/0=(y/n)
       integer :: nhordif  =  1  ! horizontal diffusion 1/0=(y/n)
       integer :: neqsig   =  0  ! equidistant sigma levels (1/0)=(y/n) !2=log-equidistant; 3=pseudolog; 4=lin-equidistant
-      integer :: nprint   =  1  ! comprehensive print out (only for checks!)
+      integer :: nprint   =  0  ! comprehensive print out (only for checks!)
       integer :: nprhor   =  0  ! grid point for print out (only for checks!)
       integer :: npacksp  =  0  ! pack spectral fields on output
       integer :: npackgp  =  0  ! pack gridpoint fields on output
@@ -353,6 +353,7 @@
       real :: dp(NHOR)        = 0.     ! surface pressure
       real :: dqsat(NHOR,NLEP)= 0.     ! saturation humidity
       real :: dqt(NHOR,NLEP)  = 0.     ! adiabatic q-tendencies (for eg kuo)
+	  real :: mmrt(NHOR,NLEP) = 0.     ! mmr tendency array
       real :: dcc(NHOR,NLEP)  = 0.     ! cloud cover
       real :: dql(NHOR,NLEP)  = 0.     ! Liquid water content
       real :: dw(NHOR,NLEV)   = 0.     ! vertical velocity (dp/dt)
@@ -364,7 +365,7 @@
       real :: du0(NHOR,NLEP)  = 0.     ! zonal wind at time t 
       real :: dv0(NHOR,NLEP)  = 0.     ! meridional wind at time t 
       real :: dtrace(NLON,NLAT,NLEV,NTRACE) = 1.0 ! Trace array
-	  real :: daeros(NLON,NLAT,NLEV,NAERO) = 1.0 ! Aerosol array
+	  real :: daeros(NLON,NLAT,NLEV,NAERO) = 0.0 ! Aerosol array
       
       real :: mint(NHOR) = 0.0 !Minimum troposphere temperature 
       
