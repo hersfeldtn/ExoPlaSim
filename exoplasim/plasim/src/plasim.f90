@@ -806,6 +806,9 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call mpputgp('dq'  ,dq(1,NLEP),NHOR,1)
       else                  ! semi-langrange: save complete humidity array
          call mpputgp('dq'  ,dq,NHOR,NLEP)
+	  if (NAERO > 0) then
+	     call mpputgp('mmr' ,mmr,NHOR,NLEP)
+	  endif
       endif
 !
 !     accumulated diagnostics
@@ -1030,6 +1033,9 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call mpgetgp('dq',dq(1,NLEP),NHOR,1)
       else                  ! semi-langrange: read complete humidity array
          call mpgetgp('dq',dq,NHOR,NLEP)
+	  if (NAERO > 0) then
+	     call mpgetgp('mmr',mmr,NHOR,NLEP)
+	  endif
       endif
 
 !     read and scatter accumulated diagnostics
@@ -3082,7 +3088,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       dvdt(:,:)=0.
       dtdt(:,:)=0.
       dqdt(:,:)=0.
-	  mmrt(:,:)=0.
+!	  mmrt(:,:)=0.
 
 !
 !     transform to gridpoint domain
@@ -3134,31 +3140,6 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
        endif ! nqspec	  
       endif ! nkits
       call guihor("DQ" // char(0),dq,NLEV,1000.0,0.0)
-
-	  
-!	  aerosol transport
-	  
-      if (nsela > 0 .and. nkits == 0 .and. NAERO > 0) then
-	   if (nqspec == 0) then
-        mmrt(:,:) = mmr(:,:) ! Save old value of q
-        call mpgagp(zmmr,mmr,NLEV)
-        if (mypid == NROOT) then
-         do jlat = 1 , NLAT
-          daeros(:,NLAT+1-jlat,:,1) = zmmr(:,jlat,:)
-         enddo ! jlat
-        endif ! mypid
-       endif ! nqspec
-       call aero_main
-       if (nqspec == 0) then
-        if (mypid == NROOT) then
-         do jlat = 1 , NLAT
-          zmmr(:,jlat,:) = daeros(:,NLAT+1-jlat,:,1)
-         enddo
-        endif ! mypid
-        call mpscgp(zmmr,mmr,NLEV)
-        mmrt(:,:) = (mmr(:,:) - mmrt(:,:)) / deltsec !  q advection term
-       endif ! nqspec	  
-      endif ! nkits 
 
 !
 !     compute output specific humidity
@@ -3287,6 +3268,37 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 !
       
       call hurricanestep  
+	  
+!     i) aerosol transport
+
+	  if (nsela == 1 .and. NAERO > 0) then
+		daeros(:,:,:,1) = mmr(:,:,:)
+		call aero_main
+		mmr(:,:,:) = daeros(:,:,:,1)
+	  endif
+
+	  
+      ! if (nsela > 0 .and. nkits == 0) then
+	   ! if (NAERO > 0) then
+        ! mmrt(:,:) = mmr(:,:) ! Save old value of q
+        ! call mpgagp(zmmr,mmr,NLEV)
+        ! if (mypid == NROOT) then
+         ! do jlat = 1 , NLAT
+          ! daeros(:,NLAT+1-jlat,:,1) = zmmr(:,jlat,:)
+         ! enddo ! jlat
+        ! endif ! mypid
+       ! endif ! naero
+       ! call aero_main
+       ! if (NAERO > 0) then
+        ! if (mypid == NROOT) then
+         ! do jlat = 1 , NLAT
+          ! zmmr(:,jlat,:) = daeros(:,NLAT+1-jlat,:,1)
+         ! enddo
+        ! endif ! mypid
+        ! call mpscgp(zmmr,mmr,NLEV)
+        ! mmrt(:,:) = (mmr(:,:) - mmrt(:,:)) / deltsec !  q advection term
+       ! endif ! nqspec	  
+      ! endif ! nkits 
 
 !
 !     END OF PARAMETERISATION ROUTINES
@@ -3381,7 +3393,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpsumsc(szf,szt,NLEV)
       if (nqspec == 1) call mpsumsc(sqf,sqt,NLEV)
       if (nqspec == 0) dq(:,:) = dq(:,:) + dqdt(:,:) * deltsec
-	  if (nqspec == 0 .and. NAERO > 1) mmr(:,:) = mmr(:,:) + mmrt(:,:) * deltsec
+!	  if (nsela == 1 .and. NAERO > 0) mmr(:,:) = mmr(:,:) + mmrt(:,:) * deltsec
 
       return
       end

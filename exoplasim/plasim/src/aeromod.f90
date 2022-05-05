@@ -29,7 +29,7 @@
       integer,parameter :: aero_jord = 2
       integer,parameter :: aero_kord = 3
 	  
-	  integer,parameter :: l_aero = 1 ! 1 = photochemical haze (source at top level)
+	  integer,parameter :: l_source = 1 ! 1 = photochemical haze (source at top level)
 	                                  ! 2 = dust (source at bottom level)
 
       integer,parameter :: aero_cnst = 1   ! 1 = constant preserving
@@ -94,7 +94,7 @@
     
       if (mypid == NROOT) then
 
-         call aerocore( daeros,l_aero,sigmah,dt,          &
+         call aerocore(daeros,l_source,sigmah,dt,         &
                       zps0,zps1,zu,zv,                    &
                       dtoa,dtdx,apart,rhop,fcoeff,        &
                       aero_iord,aero_jord,aero_kord,      & 

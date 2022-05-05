@@ -5,7 +5,7 @@
 !=======================================================================
 !
 !****6***0*********0*********0*********0*********0*********0**********72
-      subroutine aerocore(mmr,l_aero,sigmah,dt,ps1,ps2, &
+      subroutine aerocore(mmr,l_source,sigmah,dt,ps1,ps2, &
                         u,v,dtoa,dtdx,apart,rhop,fcoeff,  &
                         iord,jord,kord,                   &
                         NAERO,im,jm,nl,dap,dbk,           &
@@ -246,14 +246,14 @@
 ! activated if the user set "fill" to be true.
 ! Alternatively, one can use the MFCT option to enforce monotonicity.
 !
-	  use pumamod, only: ga ! Use planet's gravity from pumamod (plasimmod.f90)
+	  use pumamod, only: NLAT,NLON,NLEV,ga,dls ! Use planet's gravity and land-sea mask from pumamod (plasimmod.f90)
 	  use radmod, only: gmu0 ! Use cosine of solar zenith angle from radmod; used to define haze production profile at top level
       implicit none
 
 ! Input-Output variables
 
       integer,intent(in) :: NAERO,im,jm,nl,iml,j1,j2,js0,jn0 ! Input variables passed from other modules
-      integer,intent(in) :: iord,jord,kord,cnst,l_aero
+      integer,intent(in) :: iord,jord,kord,cnst,l_source
 
 ! Input-Output arrays
 
@@ -587,10 +587,13 @@
 	call viscos(temp,im,jm,nl,nud,mu)
 	
 !****6***0*********0*********0*********0*********0*********0**********72
-! Calculate Cunningham factor, store as beta (3D)
+! Calculate Cunningham factor, store as beta (3D) + call calculation of
+! gas density in SI units; both used in calculation of terminal velocity
 !****6***0*********0*********0*********0*********0*********0**********72
 		
 	call chamfac(temp,im,jm,nl,sigmah,ps2,apart,nud,beta)
+	
+	call density(im,jm,nl,temp,delp,ps,sigmah,nud,rhog)
 	
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Calculate terminal velocity, store as vels (3D)
@@ -609,14 +612,16 @@
 !MIC$* shared(CRX,CRY,PU,xmass,ymass,fx,fy,acosp,rcap,qz)
 !MIC$* private(i,j,k,jt,wk,DG2)
 
-      select case (l_aero) ! Choose your aerosol source
+      select case (l_source) ! Choose your aerosol source
       case(1) ! Case 1: photochemical haze
 	    call solang ! Use subroutine from radmod to calculate solar zenith angle
 		do i=i,im ! Loop through longitudes
 			mmr(:,i,1,ic) = fcoeff*gmu0 ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
 		enddo
       case(2) ! Case 2: dust
-        write(l_aero,*) 'Source * (dust) not added yet' ! mmr(:,:,nl,ic) = fcoeff*[land gridpoints]
+		dls = reshape(dls, (/NLAT,NLON/)) ! Import land-sea mask from landmod and reshape to match grid size
+		mmr(:,:,NLEV,ic) = fcoeff*dls ! At k=surface, land grid boxes are given the abundance fcoeff (kg/kg) and sea is given 0
+        write(nud,*) SHAPE(dls)
       end select
       
 	  do 2500 k=1,nl ! Vertical levels loop
@@ -677,9 +682,7 @@
 99    qz(i,j,k) = mmr(i,j,k,IC)
 
       endif
-	  
-	  write(nud,*)'We are in level =',k
- 
+	   
 2500  continue     ! end of k-loop
 
  
@@ -688,8 +691,6 @@
       call FZPPM(qz,fz,IM,JM,NL,daero,W,delp,KORD)
 !****6***0*********0*********0*********0*********0*********0**********72
 
-	  write(nud,*) 'max and min fz =',maxval(fz),minval(fz)
-	  flush(nud)
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Compute vertical flux due to gravitational settling 
       call gsettle(qz,im,jm,nl,delp,vels,nud,gz)
@@ -923,8 +924,6 @@
 	RETURN
 	END
 	
-
-	
 	!****6***0*********0*********0*********0*********0*********0**********72
 	SUBROUTINE chamfac(temp,im,jm,nl,sigmah,ps,apart,nud,	 &
 						beta)
@@ -987,6 +986,55 @@
 	END
 
 
+	!****6***0*********0*********0*********0*********0*********0**********72
+	SUBROUTINE density(im,jm,nl,temp,delp,ps,sigmah,nud,   &
+					   rhog)
+
+! 	Calculate the gas density in kg/m3 (input for terminal velocity calculation)
+!****6***0*********0*********0*********0*********0*********0**********72
+
+	IMPLICIT NONE
+	
+! Dimensions of arrays
+
+	INTEGER,INTENT(IN) :: im,jm,nl,nud ! Length of x, y, and z dimensions
+	
+! Define arrays
+
+	REAL,INTENT(IN) :: delp(im,jm,nl) ! Air density
+	REAL,INTENT(IN) :: temp(im,jm,nl) ! Temperature
+	REAL,INTENT(IN) :: sigmah(nl) ! Sigma
+	REAL,INTENT(IN) :: ps(im,jm) ! Surface air pressure
+	REAL,INTENT(OUT) :: rhog(im,jm,nl) ! Density of surrounding gas
+
+! Local arrays	
+	REAL :: airp(im,jm,nl) ! Air pressure 
+	INTEGER :: k ! For vertical loop
+	
+! Constants
+
+	REAL :: R_gas ! Gas constant for ideal gas law
+	REAL :: M_mass ! Molar mass of nitrogen
+		
+	R_gas = 8.314 ! SI units
+	M_mass = 28.0134 ! kg/mol for nitrogen
+	
+! Calculations
+	
+	DO k=1,nl
+		airp(:,:,k) = ps(:,:)*sigmah(k) ! Air pressure at mid level in hPa/mbar
+	ENDDO
+	
+	airp = airp*100 ! Convert to Pa to be in SI units for calculations below
+	
+	rhog = (delp*M_mass)/(R_gass*temp)
+	write(nud,*) 'min and max rhog =',minval(rhog),maxval(rhog)
+	
+	RETURN
+	END
+
+
+	
 	!****6***0*********0*********0*********0*********0*********0**********72
 	SUBROUTINE vterm(im,jm,nl,beta,apart,delp,rhop,mu,	 &
 					temp,sigmah,ps,nud,vels)
