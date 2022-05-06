@@ -292,6 +292,8 @@
 	  real ::   beta(im,jm,nl) ! Cunningham factor used in terminal velocity, calculated by chamfac subroutine
 	  real ::   vels(im,jm,nl) ! Terminal velocity of falling aerosol particles
 	  real ::	temp(im,jm,nl) ! Local temperature array, remove negative values and replace with 0 to avoid errors
+	  real ::   rhog(im,jm,nl) ! Array for gas density calculated in routine
+	  real ::   angle(im,jm) ! Array for cosine of solar zenith angle
 
 ! scalars
 
@@ -593,13 +595,13 @@
 		
 	call chamfac(temp,im,jm,nl,sigmah,ps2,apart,nud,beta)
 	
-	call density(im,jm,nl,temp,delp,ps,sigmah,nud,rhog)
+	call density(im,jm,nl,temp,ps2,sigmah,nud,rhog)
 	
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Calculate terminal velocity, store as vels (3D)
 !****6***0*********0*********0*********0*********0*********0**********72
 	
-	call vterm(im,jm,nl,beta,apart,delp2,rhop,mu,temp,sigmah,ps2,nud,vels)	
+	call vterm(im,jm,nl,beta,apart,rhop,mu,temp,sigmah,ps2,rhog,nud,vels)	
 
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Do transport one tracer at a time.
@@ -614,14 +616,15 @@
 
       select case (l_source) ! Choose your aerosol source
       case(1) ! Case 1: photochemical haze
-	    call solang ! Use subroutine from radmod to calculate solar zenith angle
-		do i=i,im ! Loop through longitudes
-			mmr(:,i,1,ic) = fcoeff*gmu0 ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
-		enddo
+!	    call solang ! Use subroutine from radmod to calculate solar zenith angle
+!		call mpgagp(angle,gmu0,1) ! Gather from nodes
+        angle(:,:) = 1.0
+		mmr(:,:,1,ic) = fcoeff*angle ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
+	    write(nud,*) 'source = ',mmr(:,30,1,ic)
       case(2) ! Case 2: dust
-		dls = reshape(dls, (/NLAT,NLON/)) ! Import land-sea mask from landmod and reshape to match grid size
-		mmr(:,:,NLEV,ic) = fcoeff*dls ! At k=surface, land grid boxes are given the abundance fcoeff (kg/kg) and sea is given 0
-        write(nud,*) SHAPE(dls)
+!		dls = reshape(dls, (/NLAT,NLON/)) ! Import land-sea mask from landmod and reshape to match grid size
+!		mmr(:,:,NLEV,ic) = fcoeff*dls ! At k=surface, land grid boxes are given the abundance fcoeff (kg/kg) and sea is given 0
+        write(nud,*) 'Case 2 not built yet'
       end select
       
 	  do 2500 k=1,nl ! Vertical levels loop
@@ -693,7 +696,7 @@
 
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Compute vertical flux due to gravitational settling 
-      call gsettle(qz,im,jm,nl,delp,vels,nud,gz)
+      call gsettle(qz,im,jm,nl,rhog,vels,nud,gz)
 	  
 !****6***0*********0*********0*********0*********0*********0**********72
  
@@ -762,7 +765,7 @@
       enddo							
 
 ! For all levels except the top and bottom, add flux from level above and subtract flux falling out of current level
-      do 101 k=2,NL-1 
+      do 101 k=2,NL
 
       do 425 j=j1,j2 ! Between the caps
       do 425 i=1,IM ! For all lons
@@ -797,7 +800,7 @@
 			daero(i,j,nl) = daero(i,j,nl) +  fx(i,j,nl) - fx(i+1,j,nl)                   &
                             + (fy(i,j,nl) - fy(i,j+1,nl))*acosp(j)/dlat(j) &
                             +  fz(i,j,nl) - fz(i,j,nl+1) &
-							+ gz(i,j,nl-1)*ga
+							+ gz(i,j,nl)*ga
 		enddo ! Lon loop
 	  enddo ! Lat loop
 	  
@@ -966,11 +969,9 @@
 ! Calculation of mean free path of the bulk gas
 
 	DO k=1,nl
-		airp(:,:,k) = ps(:,:)*sigmah(k) ! Air pressure at mid level in hPa/mbar
+		airp(:,:,k) = ps(:,:)*sigmah(k) ! Air pressure at mid level in Pa
 	ENDDO
-	
-	airp = airp*100 ! Convert to Pa to be in SI units for calculations below
-	
+		
 	coeff = (kb/rad)*(1./(4.*PI*rad))
 	write(nud,*) 'coeff =', coeff
 	lambda = coeff*(temp/airp)
@@ -987,7 +988,7 @@
 
 
 	!****6***0*********0*********0*********0*********0*********0**********72
-	SUBROUTINE density(im,jm,nl,temp,delp,ps,sigmah,nud,   &
+	SUBROUTINE density(im,jm,nl,temp,ps,sigmah,nud,   &
 					   rhog)
 
 ! 	Calculate the gas density in kg/m3 (input for terminal velocity calculation)
@@ -1001,7 +1002,6 @@
 	
 ! Define arrays
 
-	REAL,INTENT(IN) :: delp(im,jm,nl) ! Air density
 	REAL,INTENT(IN) :: temp(im,jm,nl) ! Temperature
 	REAL,INTENT(IN) :: sigmah(nl) ! Sigma
 	REAL,INTENT(IN) :: ps(im,jm) ! Surface air pressure
@@ -1017,17 +1017,15 @@
 	REAL :: M_mass ! Molar mass of nitrogen
 		
 	R_gas = 8.314 ! SI units
-	M_mass = 28.0134 ! kg/mol for nitrogen
+	M_mass = 0.0280 ! kg/mol for nitrogen
 	
 ! Calculations
 	
 	DO k=1,nl
-		airp(:,:,k) = ps(:,:)*sigmah(k) ! Air pressure at mid level in hPa/mbar
+		airp(:,:,k) = ps(:,:)*sigmah(k) ! Air pressure at mid level in Pa
 	ENDDO
-	
-	airp = airp*100 ! Convert to Pa to be in SI units for calculations below
-	
-	rhog = (delp*M_mass)/(R_gass*temp)
+		
+	rhog = (airp*M_mass)/(R_gas*temp)
 	write(nud,*) 'min and max rhog =',minval(rhog),maxval(rhog)
 	
 	RETURN
@@ -1036,8 +1034,8 @@
 
 	
 	!****6***0*********0*********0*********0*********0*********0**********72
-	SUBROUTINE vterm(im,jm,nl,beta,apart,delp,rhop,mu,	 &
-					temp,sigmah,ps,nud,vels)
+	SUBROUTINE vterm(im,jm,nl,beta,apart,rhop,mu,	 &
+					temp,sigmah,ps,rhog,nud,vels)
 	
 ! 	Calculate the terminal velocity of aerosol particles in the vertical direction
 !****6***0*********0*********0*********0*********0*********0**********72
@@ -1052,11 +1050,11 @@
 ! Define arrays
 
 	REAL,INTENT(INOUT) :: beta(im,jm,nl) ! Cunningham factor
-	REAL,INTENT(IN) :: delp(im,jm,nl) ! Air density
 	REAL,INTENT(INOUT) :: mu(im,jm,nl) ! Viscosity
 	REAL,INTENT(IN) :: temp(im,jm,nl) ! Temperature
 	REAL,INTENT(IN) :: sigmah(nl) ! Sigma
 	REAL,INTENT(IN) :: ps(im,jm,nl) ! Surface air pressure
+	REAL,INTENT(IN) :: rhog(im,jm,nl) ! Gas density
 	REAL,INTENT(OUT) :: vels(im,jm,nl) ! Terminal velocity
 
 ! Define constants
@@ -1064,19 +1062,19 @@
 	REAL :: apart ! Aerosol particle radius
 	REAL :: rhop ! Density of aerosol particle
 	
-	where(mu .le. 0.) mu = 1E-06
+	where(mu .le. 0.) mu = 1E-07
 	
 	write(nud,*) 'min viscosity =',minval(mu)
 	write(nud,*) 'min and max beta =',minval(beta),maxval(beta)
 	
-	vels = 2*beta*(apart**2)*ga*(rhop - delp)/(9*mu)
+	vels = 2*beta*(apart**2)*ga*(rhop - rhog)/(9*mu)
 	
 	RETURN
 	END
 	
 	
 !****6***0*********0*********0*********0*********0*********0**********72
-	SUBROUTINE gsettle(mmr,im,jm,nl,delp,vterm,nud,gz)
+	SUBROUTINE gsettle(mmr,im,jm,nl,rhog,vterm,nud,gz)
 	
 ! 	Calculate vertical flux of haze particles due to gravitational settling at each timestep
 !****6***0*********0*********0*********0*********0*********0**********72
@@ -1089,13 +1087,13 @@
 	
 ! Define arrays
 	
-	REAL,INTENT(IN) :: delp(im,jm,nl)
+	REAL,INTENT(IN) :: rhog(im,jm,nl)
 	REAL,INTENT(IN) :: vterm(im,jm,nl)
 	REAL,INTENT(INOUT) :: mmr(im,jm,nl)
 	REAL,INTENT(OUT)   :: gz(im,jm,nl)
 	
-	gz = -delp*mmr*vterm
-	write(nud,*) 'min delp, mmr, vterm =', minval(delp),minval(mmr),minval(vterm)
+	gz = rhog*mmr*vterm
+	write(nud,*) 'min rhog, mmr, vterm =', minval(rhog),minval(mmr),minval(vterm)
 	write(nud,*) 'max and min gz =', maxval(gz),minval(gz)
 	flush(nud)
 	
