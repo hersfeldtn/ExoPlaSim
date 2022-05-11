@@ -693,7 +693,7 @@
 ! Compute fluxes in the vertical direction
       call FZPPM(qz,fz,IM,JM,NL,daero,W,delp,KORD)
 !****6***0*********0*********0*********0*********0*********0**********72
-
+      write(nud,*) 'Max and min mmr =',maxval(mmr), minval(mmr)
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Compute vertical flux due to gravitational settling 
       call gsettle(qz,im,jm,nl,rhog,vels,nud,gz)
@@ -737,13 +737,13 @@
 !MIC$ do all autoscope
 !MIC$* private(i,j,k,sum1,sum2)
 
-! For k=1, only subtract the flux due to downward settling (plus all the advection fluxes)
+! For k=1, update top level by subtracting downward flux from this level 
 	  do j=j1,j2 
 		do i=1,IM
 			daero(i,j,1) = daero(i,j,1) +  fx(i,j,1) - fx(i+1,j,1)                   &
                             + (fy(i,j,1) - fy(i,j+1,1))*acosp(j)/dlat(j) &
-                            +  fz(i,j,1) - fz(i,j,2) &
-							- gz(i,j,1)*ga
+                            +  fz(i,j,1) - fz(i,j,2)	 &
+                            - gz(i,j,1)*ga							
 		enddo ! Lon loop
 	  enddo ! Lat loop
 	  
@@ -916,8 +916,8 @@
 	rt_mair = SQRT(mair)
 	rt_pi = SQRT(PI)
 	rt_kb = SQRT(kb)
-	sq_dair = dair**2
-	temp_eps = (temp/eps)*(4/25)
+	sq_dair = dair*dair
+	temp_eps = (temp/eps)**(4/25)
 	coeff = (5./16.)*(1./1.22)*(1./PI)*rt_pi*rt_mair*rt_kb/sq_dair
 	
 	mu = coeff*rt_temp*temp_eps
