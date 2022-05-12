@@ -345,7 +345,7 @@
         if (NAERO > 0) then !
            do jlev = 1 , NLEV
               call writegp(40,mmr(1,jlev),410,jlev)
-!			  call writegp(40,mmrt(1,jlev),411,jlev)
+			  call writegp(40,mmrt(1,jlev),411,jlev)
            enddo
         endif
       
