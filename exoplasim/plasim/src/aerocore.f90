@@ -848,6 +848,7 @@
 
 ! Finally, put in a sink term at the bottom level to avoid infinite build-up of haze particles	  
 	  mmr(:,:,nl,ic) = mmr(:,:,nl,ic)*10e-3
+	  where (mmr .lt. 0.) mmr = 0.0
 
 5000  continue !tracer loop
 
@@ -1093,6 +1094,7 @@
 	REAL,INTENT(OUT)   :: gz(im,jm,nl)
 	
 	gz = rhog*mmr*vterm
+	where(gz .lt. 0.) gz = 0.0
 	write(nud,*) 'min rhog, mmr, vterm =', minval(rhog),minval(mmr),minval(vterm)
 	write(nud,*) 'max and min gz =', maxval(gz),minval(gz)
 	flush(nud)
