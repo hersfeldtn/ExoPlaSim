@@ -806,9 +806,9 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call mpputgp('dq'  ,dq(1,NLEP),NHOR,1)
       else                  ! semi-langrange: save complete humidity array
          call mpputgp('dq'  ,dq,NHOR,NLEP)
-	  if (NAERO > 0) then
-	     call mpputgp('mmr' ,mmr,NHOR,NLEP)
-	  endif
+      if (NAERO > 0) then
+         call mpputgp('mmr' ,mmr,NHOR,NLEP)
+      endif
       endif
 !
 !     accumulated diagnostics
@@ -851,7 +851,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpputgp('aasd'        ,aasd    ,NESP,NLEV)   
       call mpputgp('aasz'        ,aasz    ,NESP,NLEV)   
       call mpputgp('aadq'        ,aadq    ,NHOR,NLEP) 
-	  call mpputgp('aammr'       ,aammr   ,NHOR,NLEP)
+      call mpputgp('aammr'       ,aammr   ,NHOR,NLEP)
       call mpputgp('aadmld'      ,aadmld  ,NHOR,1)      
       call mpputgp('aadt'        ,aadt    ,NHOR,NLEP)   
       call mpputgp('aadwatc'     ,aadwatc ,NHOR,1)     
@@ -1033,9 +1033,9 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call mpgetgp('dq',dq(1,NLEP),NHOR,1)
       else                  ! semi-langrange: read complete humidity array
          call mpgetgp('dq',dq,NHOR,NLEP)
-	  if (NAERO > 0) then
-	     call mpgetgp('mmr',mmr,NHOR,NLEP)
-	  endif
+      if (NAERO > 0) then
+         call mpgetgp('mmr',mmr,NHOR,NLEP)
+      endif
       endif
 
 !     read and scatter accumulated diagnostics
@@ -3273,11 +3273,11 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 	  
 !     i) aerosol transport
 
-	  ! if (nsela == 1 .and. nkits == 0 .and. NAERO > 0) then
-		! daeros(:,:,:,1) = mmr(:,:,:)
-		! call aero_main
-		! mmr(:,:,:) = daeros(:,:,:,1)
-	  ! endif
+      ! if (nsela == 1 .and. nkits == 0 .and. NAERO > 0) then
+        ! daeros(:,:,:,1) = mmr(:,:,:)
+        ! call aero_main
+        ! mmr(:,:,:) = daeros(:,:,:,1)
+      ! endif
 
 	  
       if (nsela == 1 .and. nkits == 0 .and. NAERO > 0) then
@@ -3391,7 +3391,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpsumsc(szf,szt,NLEV)
       if (nqspec == 1) call mpsumsc(sqf,sqt,NLEV)
       if (nqspec == 0) dq(:,:) = dq(:,:) + dqdt(:,:) * deltsec
-	  if (nsela == 1 .and. NAERO > 0) mmr(:,:) = mmr(:,:) + mmrt(:,:) * deltsec
+      if (nsela == 1 .and. NAERO > 0) mmr(:,:) = mmr(:,:) + mmrt(:,:) * deltsec
 
       return
       end

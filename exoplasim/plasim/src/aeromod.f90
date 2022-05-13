@@ -28,20 +28,19 @@
       integer,parameter :: aero_iord = 2
       integer,parameter :: aero_jord = 2
       integer,parameter :: aero_kord = 3
-	  
-	  integer,parameter :: l_source = 1 ! 1 = photochemical haze (source at top level)
-	                                  ! 2 = dust (source at bottom level)
+      
+      integer,parameter :: l_source = 1 ! 1 = photochemical haze (source at top level)
+                                      ! 2 = dust (source at bottom level)
 
       integer,parameter :: aero_cnst = 1   ! 1 = constant preserving
                                            ! 2 = mass conserving
 
 !      integer,parameter :: aero_j1  = 2  ! 1st lat. outside polar cap
 !      integer,parameter :: aero_j2  = NLAT + 1 - aero_j1 
-                                         ! last lat. outside polar cap
-										 
-	  real,parameter :: apart = 50e-06 ! Radius of aerosol particle in meters
-	  real,parameter :: rhop = 1000 ! Density of aerosol particle in kg/m3
-	  real,parameter :: fcoeff = 10e-13 ! Haze particle mass production rate in kg/m2s
+                                         ! last lat. outside polar cap 
+      real,parameter :: apart = 50e-06 ! Radius of aerosol particle in meters
+      real,parameter :: rhop = 1000 ! Density of aerosol particle in kg/m3
+      real,parameter :: fcoeff = 10e-13 ! Haze particle mass production rate in kg/m2s
 
       end module aeromod
 
@@ -56,7 +55,7 @@
                          NLON,NLAT,NLEV,NAERO,       &
                          mypid,NROOT,sigmah,dt
       use tracermod
-	  use aeromod
+      use aeromod
       implicit none
 
       real :: zu   (NLON,NLAT,NLEV)
