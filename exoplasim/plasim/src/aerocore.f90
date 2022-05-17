@@ -294,6 +294,7 @@
       real ::    temp(im,jm,nl) ! Local temperature array, remove negative values and replace with 0 to avoid errors
       real ::   rhog(im,jm,nl) ! Array for gas density calculated in routine
       real ::   angle(im,jm) ! Array for cosine of solar zenith angle
+      real ::   land(im,jm) ! Array for binary land mask
 
 ! scalars
 
@@ -622,9 +623,8 @@
         mmr(:,:,1,ic) = fcoeff*angle ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
         write(nud,*) 'source = ',mmr(:,30,1,ic)
       case(2) ! Case 2: dust
-!       dls = reshape(dls, (/NLAT,NLON/)) ! Import land-sea mask from landmod and reshape to match grid size
-!       mmr(:,:,NLEV,ic) = fcoeff*dls ! At k=surface, land grid boxes are given the abundance fcoeff (kg/kg) and sea is given 0
-        write(nud,*) 'Case 2 not built yet'
+        call mpgagp(land,dls,1) ! Import land-sea mask from landmod and reshape to match grid size
+        mmr(:,:,NLEV,ic) = fcoeff*land ! At k=surface, land grid boxes are given the abundance fcoeff (kg/kg) and sea is given 0
       end select
       
       do 2500 k=1,nl ! Vertical levels loop
@@ -847,7 +847,7 @@
       end select
 
 ! Finally, put in a sink term at the bottom level to avoid infinite build-up of haze particles	  
-      mmr(:,:,nl,ic) = mmr(:,:,nl,ic)*10e-3
+      mmr(:,:,nl,ic) = mmr(:,:,nl,ic)*10e-6
       where (mmr .lt. 0.) mmr = 0.0
 
 5000  continue !tracer loop

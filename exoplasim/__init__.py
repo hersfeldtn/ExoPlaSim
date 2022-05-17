@@ -157,7 +157,7 @@ class Model(object):
     
 
     """
-    def __init__(self,resolution="T21",layers=10,ncpus=4,precision=8,debug=False,inityear=0,
+    def __init__(self,resolution="T21",layers=10,ncpus=1,precision=8,debug=True,inityear=0,
                 recompile=False,optimization=None,mars=False,workdir="most",source=None,force991=False,
                 modelname="MOST_EXP",outputtype=".npz",crashtolerant=False):
         
@@ -1394,25 +1394,25 @@ class Model(object):
         else:
             self._crash()
     
-    def configure(self,noutput=True,flux=1367.0,startemp=None,starspec=None,pH2=None,
-            pHe=None,pN2=None,pO2=None,pCO2=None,pAr=None,pNe=None,
+    def configure(self,noutput=True,flux=837.7,startemp=3042,starspec=None,pH2=None,
+            pHe=None,pN2=0.999622,pO2=None,pCO2=0.000378,pAr=None,pNe=None,
             pKr=None,pH2O=None,gascon=None,pressure=None,pressurebroaden=True,
-            vtype=0,rotationperiod=1.0,synchronous=False,substellarlon=180.0,
+            vtype=0,rotationperiod=11.2,synchronous=True,substellarlon=180.0,
             year=None,glaciers={"toggle":False,"mindepth":2.0,"initialh":-1.0},
-            restartfile=None,gravity=None,radius=None,eccentricity=None,
-            obliquity=None,lonvernaleq=None,fixedorbit=False,orography=None,
-            seaice=True,co2weathering=False,evolveco2=False,physicsfilter=None,
+            restartfile=None,gravity=10.9,radius=7160000,eccentricity=0.0,
+            obliquity=0.0,lonvernaleq=None,fixedorbit=True,orography=None,
+            seaice=False,co2weathering=False,evolveco2=False,physicsfilter="gp|exp|sp",
             filterkappa=8.0,filterpower=8,filterLHN0=15.0,diffusionwaven=None,
             qdiffusion=None,tdiffusion=None,zdiffusion=None,ddiffusion=None,
             diffusionpower=None,erosionsupplylimit=None,outgassing=50.0,snowicealbedo=None,
             twobandalbedo=False,maxsnow=None,soilalbedo=None,oceanalbedo=None,
             oceanzenith="ECHAM-3",wetsoil=False,soilwatercap=None,vegetation=False,
             vegaccel=1,nforestgrowth=1.0,initgrowth=0.5,initstomcond=1.0,initrough=2.0,
-            initsoilcarbon=0.0,initplantcarbon=0.0,aquaplanet=False,
-            desertplanet=False,soilsaturation=None,drycore=False,ozone=True,
+            initsoilcarbon=0.0,initplantcarbon=0.0,aquaplanet=True,
+            desertplanet=False,soilsaturation=None,drycore=False,ozone=False,
             cpsoil=None,soildepth=1.0,mldepth=50.0,tlcontrast=0.0,desync=0.0,
             writefrequency=None,modeltop=None,stratosphere=False,top_restoretime=None,
-            tropopause=None,timestep=45.0,runscript=None,columnmode=None,runsteps=None,
+            tropopause=None,timestep=30.0,runscript=None,columnmode=None,runsteps=None,
             highcadence={"toggle":0,"start":320,"end":576,"interval":4},
             snapshots=None,resources=[],landmap=None,stormclim=False,nstorms=4,
             stormcapture={"VITHRESH":0.145,"GPITHRESH":0.37,"VMXTHRESH":33.0,
@@ -1420,7 +1420,7 @@ class Model(object):
                             "MAXSURFTEMP":373.15,"WINDTHRESH":33.0,"SWINDTHRESH":20.5,
                             "SIZETHRESH":30,"ENDTHRESH":16,"MINSTORMLEN":256,
                             "MAXSTORMLEN":1024,"NKTRIGGER":0,"toggle":0},
-            topomap=None,threshold=5.0e-4,otherargs={}):
+            topomap=None,threshold=5.0e-4,otherargs={"NQSPEC@plasim_namelist":'0',"NLOWIO@plasim_namelist":'0'}):
         """Configure the model's namelists and boundary conditions.
         
         The defaults here are appropriate for an Earth model.

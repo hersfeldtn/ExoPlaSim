@@ -365,11 +365,12 @@
 !       *********************
 !       * aerosol mass mixing ratio (from aerocore) *
 !       *********************
-
-!       do jlev = 1, NLEV
-!          aammr(:,jlev) = aammr(:,jlev)/real(naccuout)
-!          call writegp(40,aammr(1,jlev),410,jlev)
-!       enddo
+        if (NAERO > 0) then
+           do jlev = 1, NLEV
+              aammr(:,jlev) = aammr(:,jlev)/real(naccuout)
+              call writegp(40,aammr(1,jlev),410,jlev)
+           enddo
+        endif
         
 !       **********************************
 !       * mixed-layer depth (from ocean) *

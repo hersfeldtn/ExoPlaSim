@@ -14,7 +14,7 @@ setup(
     author_email='paradise.astro@gmail.com',
     license='GNU General Public License',
     license_files=["LICENSE.TXT",],
-    url='https://github.com/alphaparrot/ExoPlaSim',
+    url='https://github.com/maureenjcohen/ExoPlaSim',
     description='Exoplanet GCM',
     long_description_content_type='text/x-rst',
     long_description=open('README.rst').read(),
