@@ -11,14 +11,14 @@
  NADV        =     1
  NDIAG       =     0
  NGUIDBG     =     0
- NQSPEC      =     1
+ NQSPEC      =     0
  NVEG        =     0
  NWPD        =     0
- NLOWIO      =     1
+ NLOWIO      =     0
  NSTPW  =  160 
  NPRINT      =     0
  NSYNC       =     1
- NSNAPSHOT = 1 
+ NSNAPSHOT = 0 
  NSTPS = 480 
  NFILTER = 0
  NGPTFILTER = 1

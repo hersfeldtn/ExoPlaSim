@@ -616,9 +616,9 @@
 
       select case (l_source) ! Choose your aerosol source
       case(1) ! Case 1: photochemical haze
-!       call solang ! Use subroutine from radmod to calculate solar zenith angle
-!       call mpgagp(angle,gmu0,1) ! Gather from nodes
-        angle(:,:) = 1.0
+       call solang ! Use subroutine from radmod to calculate solar zenith angle
+       call mpgagp(angle,gmu0,1) ! Gather from nodes
+!        angle(:,:) = 1.0
         mmr(:,:,1,ic) = fcoeff*angle ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
         write(nud,*) 'source = ',mmr(:,30,1,ic)
       case(2) ! Case 2: dust
