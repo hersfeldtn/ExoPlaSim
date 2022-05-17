@@ -857,12 +857,12 @@
          do ic=1,naero
             write(nud,*) '* tracer',ic,'* max. & min. mmr =', &
                        maxval(mmr(:,:,:,ic)),minval(mmr(:,:,:,ic))
-            write(nud,*) 'max and min rhog =',maxval(rhog),minval(rhog)
-            write(nud,*) 'max and min viscosity =',maxval(viscos),minval(viscos)
-            write(nud,*) 'max and min Cunningham factor =',maxval(beta),minval(beta)
-            write(nud,*) 'max and min terminal velocity =',maxval(vterm),minval(vterm)
-            write(nud,*) 'max and min gz =', maxval(gz),minval(gz)
-            flush(nud)
+            ! write(nud,*) 'max and min rhog =',maxval(rhog),minval(rhog)
+            ! write(nud,*) 'max and min viscosity =',maxval(viscos),minval(viscos)
+            ! write(nud,*) 'max and min Cunningham factor =',maxval(beta),minval(beta)
+            ! write(nud,*) 'max and min terminal velocity =',maxval(vterm),minval(vterm)
+            ! write(nud,*) 'max and min gz =', maxval(gz),minval(gz)
+            ! flush(nud)
          end do
       endif
 
