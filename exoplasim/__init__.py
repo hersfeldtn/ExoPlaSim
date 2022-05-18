@@ -9,6 +9,7 @@ import numpy as np
 import glob
 import exoplasim.gcmt 
 import exoplasim.pyburn
+import exoplasim.pyfft
 import exoplasim.filesupport
 from exoplasim.filesupport import SUPPORTED
 import exoplasim.randomcontinents
@@ -157,7 +158,7 @@ class Model(object):
     
 
     """
-    def __init__(self,resolution="T21",layers=10,ncpus=1,precision=8,debug=True,inityear=0,
+    def __init__(self,resolution="T21",layers=20,ncpus=1,precision=8,debug=True,inityear=0,
                 recompile=False,optimization=None,mars=False,workdir="most",source=None,force991=False,
                 modelname="MOST_EXP",outputtype=".npz",crashtolerant=False):
         

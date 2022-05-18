@@ -847,7 +847,7 @@
       end select
 
 ! Finally, put in a sink term at the bottom level to avoid infinite build-up of haze particles	  
-      mmr(:,:,nl,ic) = mmr(:,:,nl,ic)*10e-6
+      mmr(:,:,nl,ic) = mmr(:,:,nl,ic)*10e-3
       where (mmr .lt. 0.) mmr = 0.0
 
 5000  continue !tracer loop
