@@ -158,7 +158,7 @@ class Model(object):
     
 
     """
-    def __init__(self,resolution="T21",layers=20,ncpus=1,precision=8,debug=True,inityear=0,
+    def __init__(self,resolution="T21",layers=10,ncpus=1,precision=8,debug=True,inityear=0,
                 recompile=False,optimization=None,mars=False,workdir="most",source=None,force991=False,
                 modelname="MOST_EXP",outputtype=".npz",crashtolerant=False):
         
@@ -1400,7 +1400,7 @@ class Model(object):
             pKr=None,pH2O=None,gascon=None,pressure=None,pressurebroaden=True,
             vtype=0,rotationperiod=11.2,synchronous=True,substellarlon=180.0,
             year=None,glaciers={"toggle":False,"mindepth":2.0,"initialh":-1.0},
-            restartfile=None,gravity=10.9,radius=7160000,eccentricity=0.0,
+            restartfile=None,gravity=10.9,radius=1.12,eccentricity=0.0,
             obliquity=0.0,lonvernaleq=None,fixedorbit=True,orography=None,
             seaice=False,co2weathering=False,evolveco2=False,physicsfilter="gp|exp|sp",
             filterkappa=8.0,filterpower=8,filterLHN0=15.0,diffusionwaven=None,
@@ -1415,7 +1415,7 @@ class Model(object):
             writefrequency=None,modeltop=None,stratosphere=False,top_restoretime=None,
             tropopause=None,timestep=30.0,runscript=None,columnmode=None,runsteps=None,
             highcadence={"toggle":0,"start":320,"end":576,"interval":4},
-            snapshots=None,resources=[],landmap=None,stormclim=False,nstorms=4,
+            snapshots=720,resources=[],landmap=None,stormclim=False,nstorms=4,
             stormcapture={"VITHRESH":0.145,"GPITHRESH":0.37,"VMXTHRESH":33.0,
                             "LAVTHRESH":1.2e-5,"VRMTHRESH":0.577,"MINSURFTEMP":298.15,
                             "MAXSURFTEMP":373.15,"WINDTHRESH":33.0,"SWINDTHRESH":20.5,

@@ -311,11 +311,11 @@ echo "YEARS="$years"                                             ">>plasim/run/m
 echo "while [ \$YEAR -lt \$YEARS ]                               ">>plasim/run/most_plasim_run
 echo "do                                                         ">>plasim/run/most_plasim_run
 echo "   YEAR=\`expr \$YEAR + 1\`                                ">>plasim/run/most_plasim_run
-echo "   DATANAME=\`printf '%s.%03d' \$EXP \$YEAR\`              ">>plasim/run/most_plasim_run
-echo "   SNAPNAME=\`printf '%s_SNAP.%03d' \$EXP \$YEAR\`         ">>plasim/run/most_plasim_run
-echo "   DIAGNAME=\`printf '%s_DIAG.%03d' \$EXP \$YEAR\`         ">>plasim/run/most_plasim_run
-echo "   RESTNAME=\`printf '%s_REST.%03d' \$EXP \$YEAR\`         ">>plasim/run/most_plasim_run
-echo "   SNOWNAME=\`printf '%s_SNOW.%03d' \$EXP \$YEAR\`         ">>plasim/run/most_plasim_run
+echo "   DATANAME=\`printf '%s.%05d' \$EXP \$YEAR\`              ">>plasim/run/most_plasim_run
+echo "   SNAPNAME=\`printf '%s_SNAP.%05d' \$EXP \$YEAR\`         ">>plasim/run/most_plasim_run
+echo "   DIAGNAME=\`printf '%s_DIAG.%05d' \$EXP \$YEAR\`         ">>plasim/run/most_plasim_run
+echo "   RESTNAME=\`printf '%s_REST.%05d' \$EXP \$YEAR\`         ">>plasim/run/most_plasim_run
+echo "   SNOWNAME=\`printf '%s_SNOW.%05d' \$EXP \$YEAR\`         ">>plasim/run/most_plasim_run
 if [ "$ncpus" -gt 1 ]
 then
    MPI_RUN=$(head -n 1 most_compiler_mpi | tr "=" "\n" | tail -1)
