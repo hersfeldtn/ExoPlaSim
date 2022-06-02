@@ -1,0 +1,7 @@
+ &aero_nl
+ l_source     =     1
+ apart    =     50E-06
+ rhop    =     1000
+ fcoeff  =     10E-13
+ /END
+ 
