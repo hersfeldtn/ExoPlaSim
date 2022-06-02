@@ -90,6 +90,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       landmod_namelist    = trim(landmod_namelist   ) // mrext
       vegmod_namelist     = trim(vegmod_namelist    ) // mrext
       seamod_namelist     = trim(seamod_namelist    ) // mrext
+      aero_namelist       = trim(aero_namelist      ) // mrext
       
       return
       end
@@ -185,7 +186,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call initpm                ! Several initializations
          call initsi                ! Initialize semi implicit scheme
          call guistart              ! Initialize GUI
-         if (nsela > 0) call tracer_ini0 ! initialize tracer data 
+         if (nsela > 0) call tracer_ini0 ! initialize tracer data
+         if (nsela > 0 .and. l_aero > 0) call aero_ini 
       endif ! (mypid == NROOT)
 
 !     ***********************
@@ -228,6 +230,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpbci(nrestart) ! 1: read restart file 0: initial run
       call mpbci(nqspec  ) ! 1: spectral q 0: grodpoint q
       call mpbci(nsela   ) ! 1: semi lagrangian advection enabled
+      call mpbci(l_aero  ) ! 1: aerosols enabled
 
       call mpbci(nstep   ) ! current timestep
       call mpbci(mstep   ) ! current timestep in month
@@ -806,7 +809,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call mpputgp('dq'  ,dq(1,NLEP),NHOR,1)
       else                  ! semi-langrange: save complete humidity array
          call mpputgp('dq'  ,dq,NHOR,NLEP)
-      if (NAERO > 0) then
+      if (l_aero > 0) then
          call mpputgp('mmr' ,mmr,NHOR,NLEP)
       endif
       endif
@@ -1033,7 +1036,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call mpgetgp('dq',dq(1,NLEP),NHOR,1)
       else                  ! semi-langrange: read complete humidity array
          call mpgetgp('dq',dq,NHOR,NLEP)
-      if (NAERO > 0) then
+      if (l_aero > 0) then
          call mpgetgp('mmr',mmr,NHOR,NLEP)
       endif
       endif
@@ -1217,7 +1220,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
                    , tdissd  , tdissz  , tdisst  , tdissq  , tgr        &
                    , psurf   , ptop    , ptop2   , taucool              &
                    , restim  , t0      , tfrc    , nstratosponge        &
-                   , sigh    , nenergy , nener3d , nsponge , dampsp
+                   , sigh    , nenergy , nener3d , nsponge , dampsp     &
+                   , l_aero
 !
 !     preset namelist parameter according to model set up
 !
@@ -3280,7 +3284,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       ! endif
 
 	  
-      if (nsela == 1 .and. nkits == 0 .and. NAERO > 0) then
+      if (nsela == 1 .and. nkits == 0 .and. l_aero > 0) then
         mmrt(:,:) = mmr(:,:) ! Save old value of mmr
         call mpgagp(zmmr,mmr,NLEV)
         if (mypid == NROOT) then
@@ -3391,7 +3395,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpsumsc(szf,szt,NLEV)
       if (nqspec == 1) call mpsumsc(sqf,sqt,NLEV)
       if (nqspec == 0) dq(:,:) = dq(:,:) + dqdt(:,:) * deltsec
-      if (nsela == 1 .and. NAERO > 0) mmr(:,:) = mmr(:,:) + mmrt(:,:) * deltsec
+      if (nsela == 1 .and. l_aero > 0) mmr(:,:) = mmr(:,:) + mmrt(:,:) * deltsec
 
       return
       end

@@ -581,7 +581,9 @@
 
 
     temp = dt
-    where(temp .le. 1.0) temp = 1.0
+    WHERE(temp .le. 1.0) 
+      temp = 1.0
+    ENDWHERE
       
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Calculate viscosity of bulk gas, store as mu (3D)
@@ -848,7 +850,9 @@
 
 ! Finally, put in a sink term at the bottom level to avoid infinite build-up of haze particles	  
       mmr(:,:,nl,ic) = mmr(:,:,nl,ic)*10e-3
-      where (mmr .lt. 0.) mmr = 0.0
+      where (mmr < 0.) 
+        mmr = 0.0
+      endwhere
 
 5000  continue !tracer loop
 
@@ -857,12 +861,6 @@
          do ic=1,naero
             write(nud,*) '* tracer',ic,'* max. & min. mmr =', &
                        maxval(mmr(:,:,:,ic)),minval(mmr(:,:,:,ic))
-            ! write(nud,*) 'max and min rhog =',maxval(rhog),minval(rhog)
-            ! write(nud,*) 'max and min viscosity =',maxval(viscos),minval(viscos)
-            ! write(nud,*) 'max and min Cunningham factor =',maxval(beta),minval(beta)
-            ! write(nud,*) 'max and min terminal velocity =',maxval(vterm),minval(vterm)
-            ! write(nud,*) 'max and min gz =', maxval(gz),minval(gz)
-            ! flush(nud)
          end do
       endif
 
@@ -927,8 +925,6 @@
     
     mu = coeff*rt_temp*temp_eps
     
-!   mu = (5./16.)*(1./1.22)*(1./PI)*SQRT(PI*abs(temp)*mair)*(SQRT(kb)/(dair**2))*((temp/eps)**(4/25))
-
     RETURN
     END
     
@@ -1063,7 +1059,9 @@
     REAL :: apart ! Aerosol particle radius
     REAL :: rhop ! Density of aerosol particle
     
-    where(mu .le. 0.) mu = 1E-07
+    WHERE(mu .le. 0.) 
+      mu = 1E-07
+    ENDWHERE
     
     vels = 2*beta*(apart**2)*ga*(rhop - rhog)/(9*mu)
     
@@ -1091,7 +1089,11 @@
     REAL,INTENT(OUT)   :: gz(im,jm,nl)
     
     gz = rhog*mmr*vterm
-    where(gz .lt. 0.) gz = 0.0
+	
+    WHERE(gz < 0.) 
+      gz = 0.0
+    ENDWHERE
+	
     
     RETURN
     END

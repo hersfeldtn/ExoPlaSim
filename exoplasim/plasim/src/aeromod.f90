@@ -16,7 +16,7 @@
 !     * done by Hui Wan (MPI-M).
 !     **********************************************************
 
-      use pumamod, only: NLAT,NLEV,nud
+      use pumamod
 
       logical,parameter :: aero_debug  = .TRUE.
       logical,parameter :: aero_zcross = .TRUE.
@@ -29,7 +29,7 @@
       integer,parameter :: aero_jord = 2
       integer,parameter :: aero_kord = 3
       
-      integer,parameter :: l_source = 1 ! 1 = photochemical haze (source at top level)
+      integer :: l_source = 1 ! 1 = photochemical haze (source at top level)
                                       ! 2 = dust (source at bottom level)
 
       integer,parameter :: aero_cnst = 1   ! 1 = constant preserving
@@ -38,13 +38,42 @@
 !      integer,parameter :: aero_j1  = 2  ! 1st lat. outside polar cap
 !      integer,parameter :: aero_j2  = NLAT + 1 - aero_j1 
                                          ! last lat. outside polar cap 
-      real,parameter :: apart = 50e-06 ! Radius of aerosol particle in meters
-      real,parameter :: rhop = 1000 ! Density of aerosol particle in kg/m3
-      real,parameter :: fcoeff = 10e-13 ! Haze particle mass production rate in kg/m2s
+      real :: apart = 50e-06 ! Radius of aerosol particle in meters
+      real :: rhop = 1000 ! Density of aerosol particle in kg/m3
+      real :: fcoeff = 10e-13 ! Haze particle mass production rate in kg/m2s
 
       end module aeromod
 
+!     ==================
+!     SUBROUTINE AERO_INI
+!     ==================
 
+      subroutine aero_ini
+      use aeromod
+      
+      namelist/aero_nl/l_source,apart,rhop,fcoeff
+
+      if (mypid==NROOT) then
+         open(11,file=aero_namelist)
+         read(11,aero_nl)
+         close(11)
+         write(nud,'(/," *********************************************")')
+         write(nud,'(" * AEROMOD ",a34)')
+         write(nud,'(" *********************************************")')
+         write(nud,'(" * Namelist AERO_NL from <aero_namelist> *")')
+         write(nud,'(" *********************************************")')
+         write(nud,aero_nl)
+     endif
+
+      call mpbci(l_source)
+      call mpbcr(apart)
+      call mpbcr(rhop)
+      call mpbcr(fcoeff)
+      
+      return
+      end subroutine aero_ini
+  
+  
 !     ======================
 !     SUBROUTINE AERO_MAIN
 !     ======================
