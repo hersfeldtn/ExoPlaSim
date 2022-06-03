@@ -346,7 +346,6 @@
 
       real :: dt(NHOR,NLEP)   = 0.     ! temperature 
       real :: dq(NHOR,NLEP)   = 0.     ! spec. humidity
-!      real :: mmr(NLON,NLAT,NLEV)  = 0.     ! mass mixing ratio of aerosol
       real :: mmr(NHOR,NLEP) = 0.
       real :: du(NHOR,NLEP)   = 0.     ! zonal wind [m/s]
       real :: dv(NHOR,NLEP)   = 0.     ! meridional wind [m/s]
