@@ -581,9 +581,7 @@
 
 
     temp = dt
-    WHERE(temp .le. 1.0) 
-      temp = 1.0
-    ENDWHERE
+    where (temp .le. 1.0) temp = 1.0
       
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Calculate viscosity of bulk gas, store as mu (3D)
@@ -850,9 +848,7 @@
 
 ! Finally, put in a sink term at the bottom level to avoid infinite build-up of haze particles	  
       mmr(:,:,nl,ic) = mmr(:,:,nl,ic)*10e-3
-      where (mmr < 0.) 
-        mmr = 0.0
-      endwhere
+      where (mmr .lt. 0.) mmr = 0.0
 
 5000  continue !tracer loop
 
@@ -1059,9 +1055,7 @@
     REAL :: apart ! Aerosol particle radius
     REAL :: rhop ! Density of aerosol particle
     
-    WHERE(mu .le. 0.) 
-      mu = 1E-07
-    ENDWHERE
+    where (mu .le. 0.) mu = 1E-07
     
     vels = 2*beta*(apart**2)*ga*(rhop - rhog)/(9*mu)
     
@@ -1090,9 +1084,7 @@
     
     gz = rhog*mmr*vterm
 	
-    WHERE(gz < 0.) 
-      gz = 0.0
-    ENDWHERE
+    where (gz .lt. 0.) gz = 0.0
 	
     
     RETURN
