@@ -158,7 +158,7 @@ class Model(object):
     
 
     """
-    def __init__(self,resolution="T21",layers=10,ncpus=1,precision=8,debug=True,inityear=0,
+    def __init__(self,resolution="T21",layers=10,ncpus=1,precision=4,debug=True,inityear=0,
                 recompile=False,optimization=None,mars=False,workdir="most",source=None,force991=False,
                 modelname="MOST_EXP",outputtype=".npz",crashtolerant=False):
         
@@ -1413,7 +1413,7 @@ class Model(object):
             desertplanet=False,soilsaturation=None,drycore=False,ozone=False,
             cpsoil=None,soildepth=1.0,mldepth=50.0,tlcontrast=0.0,desync=0.0,
             writefrequency=None,modeltop=None,stratosphere=False,top_restoretime=None,
-            tropopause=None,timestep=30.0,runscript=None,columnmode=None,runsteps=None,
+            tropopause=None,timestep=15.0,runscript=None,columnmode=None,runsteps=None,
             highcadence={"toggle":0,"start":320,"end":576,"interval":4},
             snapshots=720,resources=[],landmap=None,stormclim=False,nstorms=4,
             stormcapture={"VITHRESH":0.145,"GPITHRESH":0.37,"VMXTHRESH":33.0,
@@ -1422,7 +1422,7 @@ class Model(object):
                             "SIZETHRESH":30,"ENDTHRESH":16,"MINSTORMLEN":256,
                             "MAXSTORMLEN":1024,"NKTRIGGER":0,"toggle":0},
             topomap=None,threshold=5.0e-4,otherargs={"NQSPEC@plasim_namelist":'0',"NLOWIO@plasim_namelist":'0'},
-            aerosol=True,apart=10e-06,rhop=1000,asource=1,fcoeff=10e-13):
+            aerosol=True,apart=5e-09,rhop=1000,asource=1,fcoeff=10e-13):
 
         """Configure the model's namelists and boundary conditions.
         
