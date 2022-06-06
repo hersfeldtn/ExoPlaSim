@@ -1204,6 +1204,16 @@
            enddo
         endif
         
+!       *********************
+!       * aerosol mmr *
+!       *********************
+
+        if (l_aero > 0) then
+           do jlev = 1, NLEV
+              call writegp(140,mmr(1,jlev),410,jlev)
+           enddo
+        endif
+
 !       **********************************
 !       * mixed-layer depth (from ocean) *
 !       **********************************
