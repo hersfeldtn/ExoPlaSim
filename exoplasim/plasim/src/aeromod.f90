@@ -18,7 +18,7 @@
 
       use pumamod
 
-      logical,parameter :: aero_debug  = .TRUE.
+      logical,parameter :: aero_debug  = .FALSE.
       logical,parameter :: aero_zcross = .TRUE.
       logical,parameter :: aero_deform = .FALSE.
 
