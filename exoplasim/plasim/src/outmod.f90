@@ -364,7 +364,7 @@
 !       *********************
 !       * aerosol mass mixing ratio (from aerocore) *
 !       *********************
-        if (NAERO > 0) then
+        if (l_aero > 0) then
            do jlev = 1, NLEV
               aammr(:,jlev) = aammr(:,jlev)/real(naccuout)
               call writegp(40,aammr(1,jlev),410,jlev)
@@ -2246,6 +2246,7 @@
         enddo
         do j=1,NLEP
           aadq(:,j)  = 0.
+          aammr(:,j) = 0.
           aadt(:,j)  = 0.
           aadql(:,j) = 0.
           aadcc(:,j) = 0.
@@ -2358,7 +2359,8 @@
           aadqo3(:,j)  = aadqo3(:,j)  + dqo3(:,j)   
         enddo
         do j=1,NLEP
-          aadq(:,j)  = aadq(:,j)  + dq(:,j)   
+          aadq(:,j)  = aadq(:,j)  + dq(:,j)
+          aammr(:,j) = aammr(:,j) + mmr(:,j)  
           aadt(:,j)  = aadt(:,j)  + dt(:,j)     
           aadql(:,j) = aadql(:,j) + dql(:,j)     
           aadcc(:,j) = aadcc(:,j) + dcc(:,j)            

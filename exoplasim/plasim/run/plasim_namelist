@@ -14,7 +14,7 @@
  NQSPEC      =     0
  NVEG        =     0
  NWPD        =     0
- NLOWIO      =     0
+ NLOWIO      =     1
  NSTPW  =  160 
  NPRINT      =     0
  NSYNC       =     1

@@ -1081,7 +1081,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpgetgp('aasd'        ,aasd    ,NESP,NLEV)   
       call mpgetgp('aasz'        ,aasz    ,NESP,NLEV)   
       call mpgetgp('aadq'        ,aadq    ,NHOR,NLEP)
-      call mpgetgp('aammr'       ,aammr   ,NHOR,NLEP)	  
+      call mpgetgp('aammr'       ,aammr   ,NHOR,NLEP)  
       call mpgetgp('aadmld'      ,aadmld  ,NHOR,1)      
       call mpgetgp('aadt'        ,aadt    ,NHOR,NLEP)   
       call mpgetgp('aadwatc'     ,aadwatc ,NHOR,1)     
