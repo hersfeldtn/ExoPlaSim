@@ -12,7 +12,7 @@
                         iml,j1,j2,js0,jn0,                &
                         cose,cosp,acosp,dlat,rcap,        &
                         cnst,deform,zcross,               &
-                        fill,mfct,debug,nud)
+                        fill,mfct,debug,nud,angle,land)
 !****6***0*********0*********0*********0*********0*********0**********72
 !
 ! The subroutine aerocore is a duplicate of the tracer transport
@@ -246,8 +246,7 @@
 ! activated if the user set "fill" to be true.
 ! Alternatively, one can use the MFCT option to enforce monotonicity.
 !
-	  use pumamod, only: NLAT,NLON,NLEV,ga,dls ! Use planet's gravity and land-sea mask from pumamod (plasimmod.f90)
-	  use radmod, only: gmu0 ! Use cosine of solar zenith angle from radmod; used to define haze production profile at top level
+      use pumamod, only: NLAT,NLON,NLEV,ga ! Use planet's gravity from pumamod
       implicit none
 
 ! Input-Output variables
@@ -617,13 +616,8 @@
 
       select case (l_source) ! Choose your aerosol source
       case(1) ! Case 1: photochemical haze
-       call solang ! Use subroutine from radmod to calculate solar zenith angle
-       call mpgagp(angle,gmu0,1) ! Gather from nodes
-!        angle(:,:) = 1.0
         mmr(:,:,1,ic) = fcoeff*angle ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
-        write(nud,*) 'source = ',mmr(:,30,1,ic)
       case(2) ! Case 2: dust
-        call mpgagp(land,dls,1) ! Import land-sea mask from landmod and reshape to match grid size
         mmr(:,:,NLEV,ic) = fcoeff*land ! At k=surface, land grid boxes are given the abundance fcoeff (kg/kg) and sea is given 0
       end select
       

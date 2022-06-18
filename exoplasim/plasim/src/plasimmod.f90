@@ -212,7 +212,7 @@
       integer :: nstratosponge = 0 ! Switch for Newtonian cooling in hybrid stratosphere
       integer :: nqspec   = 0   ! 1: spectral q   0: gridpoint q (semi-Langrangian)
       integer :: nrdrag   = 0   ! 1: Apply Rayleigh fraction to 20-layer atmosphere
-      integer :: l_aero    = 1   ! 1: Aerosols on
+      integer :: l_aero    = 1   ! 1: Aerosols on; this also enables the semi-Lagrangian advection tracer grid initialisations
 !>>> AYP -- NEEDED AS PART OF GLACIERMOD      
       integer :: nglspec = 0
 !>>> AYP      

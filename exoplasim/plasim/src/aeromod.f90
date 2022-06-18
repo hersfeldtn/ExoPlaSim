@@ -65,10 +65,10 @@
          write(nud,aero_nl)
      endif
 
-      call mpbci(l_source)
-      call mpbcr(apart)
-      call mpbcr(rhop)
-      call mpbcr(fcoeff)
+!      call mpbci(l_source)
+!      call mpbcr(apart)
+!      call mpbcr(rhop)
+!      call mpbcr(fcoeff)
       
       return
       end subroutine aero_ini
@@ -82,9 +82,11 @@
 
       use pumamod, only: du,dv,dp,du0,dv0,dp0,daeros, &
                          NLON,NLAT,NLEV,NAERO,       &
-                         mypid,NROOT,sigmah,dt
+                         mypid,NROOT,sigmah,dt,dls
       use tracermod
       use aeromod
+      use radmod, only: gmu0 ! Use cosine of solar zenith angle from radmod; used to define haze production profile at top level
+
       implicit none
 
       real :: zu   (NLON,NLAT,NLEV)
@@ -94,6 +96,8 @@
 
       real :: x (NLON+1,NLAT,NLEV,NAERO)  ! for GUI output
       real :: y (NLON+1,NLAT,NLEV)         ! for GUI output
+      real ::   angle(NLON,NLAT) ! Array for cosine of solar zenith angle
+      real ::   land(NLON,NLAT) ! Array for binary land mask
 
       integer :: j,jc
 
@@ -103,6 +107,14 @@
 
       call prepare_uvps( zu,zv,zps0,zps1,      & ! output
                          du0,dv0,dp0,du,dv,dp)   ! input
+
+      select case (l_source) ! Choose your aerosol source
+      case(1) ! Case 1: photochemical haze
+       call solang ! Use subroutine from radmod to calculate solar zenith angle
+       call mpgagp(angle,gmu0,1) ! Gather from nodes
+      case(2) ! Case 2: dust
+        call mpgagp(land,dls,1) ! Import land-sea mask from landmod and reshape to match grid size
+      end select ! 
 
       if (mypid == NROOT .and. aero_debug) then
          write(nud,'(a,f11.2)') '* max aero u   =',maxval(abs(zu))
@@ -130,7 +142,8 @@
                       iml,ffsl_j1,ffsl_j2,js0,jn0,        &
                       colae,colad,rcolad,dlat,rcap,       &
                       aero_cnst,aero_deform,aero_zcross,  &
-                      aero_fill,aero_mfct,aero_debug,nud)
+                      aero_fill,aero_mfct,aero_debug,nud, &
+                      angle,land)
 
 !        preparation for the GUI output: 
 !        invert the meridional direction and add the 360 deg. longitude

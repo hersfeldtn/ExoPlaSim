@@ -344,7 +344,7 @@
         
         if (l_aero > 0) then !
            do jlev = 1 , NLEV
-              call writegp(40,mmr(1,jlev),410,jlev)
+              call writegp(40,mmr(:,jlev),410,jlev)
            enddo
         endif
       
@@ -364,12 +364,12 @@
 !       *********************
 !       * aerosol mass mixing ratio (from aerocore) *
 !       *********************
-        if (l_aero > 0) then
-           do jlev = 1, NLEV
-              aammr(:,jlev) = aammr(:,jlev)/real(naccuout)
-              call writegp(40,aammr(1,jlev),410,jlev)
-           enddo
-        endif
+!        if (l_aero > 0) then
+!           do jlev = 1, NLEV
+!              aammr(:,jlev) = aammr(:,jlev)/real(naccuout)
+!              call writegp(40,aammr(1,jlev),410,jlev)
+!           enddo
+!        endif
         
 !       **********************************
 !       * mixed-layer depth (from ocean) *
@@ -1208,11 +1208,11 @@
 !       * aerosol mmr *
 !       *********************
 
-        if (l_aero > 0) then
-           do jlev = 1, NLEV
-              call writegp(140,mmr(1,jlev),410,jlev)
-           enddo
-        endif
+!        if (l_aero > 0) then
+!           do jlev = 1, NLEV
+!              call writegp(140,mmr(1,jlev),410,jlev)
+!           enddo
+!        endif
 
 !       **********************************
 !       * mixed-layer depth (from ocean) *
