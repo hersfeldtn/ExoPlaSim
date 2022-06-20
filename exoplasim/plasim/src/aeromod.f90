@@ -64,11 +64,6 @@
          write(nud,'(" *********************************************")')
          write(nud,aero_nl)
      endif
-
-!      call mpbci(l_source)
-!      call mpbcr(apart)
-!      call mpbcr(rhop)
-!      call mpbcr(fcoeff)
       
       return
       end subroutine aero_ini
@@ -113,7 +108,7 @@
        call solang ! Use subroutine from radmod to calculate solar zenith angle
        call mpgagp(angle,gmu0,1) ! Gather from nodes
       case(2) ! Case 2: dust
-        call mpgagp(land,dls,1) ! Import land-sea mask from landmod and reshape to match grid size
+       call mpgagp(land,dls,1) ! Import land-sea mask from landmod and reshape to match grid size
       end select ! 
 
       if (mypid == NROOT .and. aero_debug) then

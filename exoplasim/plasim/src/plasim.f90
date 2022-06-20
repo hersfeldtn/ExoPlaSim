@@ -186,8 +186,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call initpm                ! Several initializations
          call initsi                ! Initialize semi implicit scheme
          call guistart              ! Initialize GUI
-         if (nsela > 0 .or. l_aero > 0) call tracer_ini0 ! initialize tracer data
-!         if (l_aero > 0) call aero_ini 
+         if (nsela > 0) call tracer_ini0 ! initialize tracer data
+         if (nsela > 0 .and. l_aero > 0) call aero_ini 
       endif ! (mypid == NROOT)
 
 !     ***********************
@@ -589,11 +589,6 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 
       if (mypid == NROOT .and. nsela > 0) then
          call tracer_ini
-      endif
-
-      if (mypid == NROOT .and. l_aero > 0) then
-         call tracer_ini
-         call aero_ini
       endif
 
 !     Use either month countdown (n_run_years * 12 + n_run_months)
@@ -3129,8 +3124,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 !
       if (nsela > 0 .and. nkits == 0) then	  
        if (nqspec == 0) then
-	    write(nud,*) 'Semi-Lagrangian q running'
-	    flush(nud)
+        write(nud,*) 'Semi-Lagrangian q running'
+        flush(nud)
         dqt(:,:) = dq(:,:) ! Save old value of q
         call mpgagp(zgq,dq,NLEV)
         if (mypid == NROOT) then
@@ -3282,7 +3277,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 	  
 !     i) aerosol transport
   
-      if (l_aero > 0 .and. nkits == 0) then
+      if (nsela == 1 .and. nkits == 0 .and. l_aero > 0) then
         mmrt(:,:) = mmr(:,:) ! Save old value of mmr
         call mpgagp(zmmr,mmr,NLEV)
         if (mypid == NROOT) then
@@ -3393,7 +3388,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpsumsc(szf,szt,NLEV)
       if (nqspec == 1) call mpsumsc(sqf,sqt,NLEV)
       if (nqspec == 0) dq(:,:) = dq(:,:) + dqdt(:,:) * deltsec
-      if (l_aero > 0) mmr(:,:) = mmr(:,:) + mmrt(:,:) * deltsec
+      if (nsela == 1 .and. l_aero > 0) mmr(:,:) = mmr(:,:) + mmrt(:,:) * deltsec
 
       return
       end

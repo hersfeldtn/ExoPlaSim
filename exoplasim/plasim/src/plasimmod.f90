@@ -148,7 +148,7 @@
       integer :: ntspd           =       0 ! number of timesteps per day
       integer :: mtspd           =       0 ! number of timesteps per standard day
       integer :: nwpd            =       1 ! number of writes per day
-      integer :: nlowio          =       0 ! Low I/O mode (0/1)
+      integer :: nlowio          =       1 ! Low I/O mode (0/1)
       integer :: nstpw           =       0 ! Timesteps between writes (0=use nwpd)
       integer :: nstps           =       0 ! Steps per snapshot (0=use ntspd)
       integer :: ndatim(7)       =      -1 ! date & time array
