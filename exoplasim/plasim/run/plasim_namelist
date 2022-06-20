@@ -11,7 +11,7 @@
  NADV        =     1
  NDIAG       =     0
  NGUIDBG     =     0
- NQSPEC      =     0
+ NQSPEC      =     1
  NVEG        =     0
  NWPD        =     0
  NLOWIO      =     1
