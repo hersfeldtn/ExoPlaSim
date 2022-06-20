@@ -1414,13 +1414,13 @@ class Model(object):
             writefrequency=None,modeltop=None,stratosphere=False,top_restoretime=None,
             tropopause=None,timestep=15.0,runscript=None,columnmode=None,runsteps=None,
             highcadence={"toggle":0,"start":320,"end":576,"interval":4},
-            snapshots=720,resources=[],landmap=None,stormclim=False,nstorms=4,
+            snapshots=2880,resources=[],landmap=None,stormclim=False,nstorms=4,
             stormcapture={"VITHRESH":0.145,"GPITHRESH":0.37,"VMXTHRESH":33.0,
                             "LAVTHRESH":1.2e-5,"VRMTHRESH":0.577,"MINSURFTEMP":298.15,
                             "MAXSURFTEMP":373.15,"WINDTHRESH":33.0,"SWINDTHRESH":20.5,
                             "SIZETHRESH":30,"ENDTHRESH":16,"MINSTORMLEN":256,
                             "MAXSTORMLEN":1024,"NKTRIGGER":0,"toggle":0},
-            topomap=None,threshold=5.0e-4,otherargs={"NQSPEC@plasim_namelist":'0',"NLOWIO@plasim_namelist":'1'},
+            topomap=None,threshold=5.0e-4,otherargs={"NQSPEC@plasim_namelist":'1',"NLOWIO@plasim_namelist":'1'},
             aerosol=True,apart=5e-09,rhop=1000,asource=1,fcoeff=10e-13):
 
         """Configure the model's namelists and boundary conditions.
@@ -3219,6 +3219,9 @@ References
         cfg.append(str(self.initrough      ))
         cfg.append(str(self.initsoilcarbon ))
         cfg.append(str(self.initplantcarbon))
+        cfg.append(str(self.apart))
+        cfg.append(str(self.rhop))
+        cfg.append(str(self.fcoeff))
         
         print("Writing configuration....\n"+"\n".join(cfg))
         print("Writing to %s...."%filename)
