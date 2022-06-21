@@ -157,7 +157,7 @@ class Model(object):
     
 
     """
-    def __init__(self,resolution="T21",layers=10,ncpus=1,precision=4,debug=True,inityear=0,
+    def __init__(self,resolution="T21",layers=10,ncpus=8,precision=4,debug=True,inityear=0,
                 recompile=False,optimization=None,mars=False,workdir="most",source=None,force991=False,
                 modelname="MOST_EXP",outputtype=".npz",crashtolerant=False):
         
