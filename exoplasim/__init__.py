@@ -2142,11 +2142,43 @@ References
         self.startemp = startemp
         self.starradius = starradius
         if starspec:
-            if starspec[-4:]==".dat":
-                starspec=starspec[:-4]
+            if starspec[0]!="/" or starspec[:2] not in ["A:",
+                                                        "B:",
+                                                        "C:",
+                                                        "D:",
+                                                        "E:",
+                                                        "F:",
+                                                        "G:",
+                                                        "H:",
+                                                        "I:",
+                                                        "J:",
+                                                        "K:",
+                                                        "L:",
+                                                        "M:",
+                                                        "N:",
+                                                        "O:",
+                                                        "P:",
+                                                        "Q:",
+                                                        "R:",
+                                                        "S:",
+                                                        "T:",
+                                                        "U:",
+                                                        "V:",
+                                                        "W:",
+                                                        "X:",
+                                                        "Y:",
+                                                        "Z:"]: #relative path
+                if os.path.isfile(starspec): #found the file
+                    starspec = os.path.abspath(starspec)
+                else:
+                    raise OSError(f"Error: {starspec} not found. Try providing an absolute path.")
+            if not os.path.isfile(starspec):
+                raise OSError(f"Error: {starspec} not found.")
+            if not os.path.isfile("%s_hr.dat"%(starspec[:-4])):
+                raise OSError("Error: %s_hr.dat not found; both %s and %s_hr.dat must be present."%(starspec[:-4],starspec,starspec[:-4]))
             self._edit_namelist("radmod_namelist","NSTARFILE","1")
             self._edit_namelist("radmod_namelist","STARFILE","'%s'"%starspec)
-            self._edit_namelist("radmod_namelist","STARFILEHR","'%s_hr.dat'"%(starspec)[:-4])
+            self._edit_namelist("radmod_namelist","STARFILEHR","'%s_hr.dat'"%(starspec[:-4]))
         self.starspec = starspec
         
         if pH2:
@@ -2804,12 +2836,46 @@ References
                 self.starradius=starradius
             if key=="starspec":
                 starspec=value
-                if starspec[-4:]==".dat":
-                    starspec=starspec[:-4]
                 if starspec:
+                    
+                    if starspec[0]!="/" or starspec[:2] not in ["A:",
+                                                                "B:",
+                                                                "C:",
+                                                                "D:",
+                                                                "E:",
+                                                                "F:",
+                                                                "G:",
+                                                                "H:",
+                                                                "I:",
+                                                                "J:",
+                                                                "K:",
+                                                                "L:",
+                                                                "M:",
+                                                                "N:",
+                                                                "O:",
+                                                                "P:",
+                                                                "Q:",
+                                                                "R:",
+                                                                "S:",
+                                                                "T:",
+                                                                "U:",
+                                                                "V:",
+                                                                "W:",
+                                                                "X:",
+                                                                "Y:",
+                                                                "Z:"]: #relative path
+                        if os.path.isfile(starspec): #found the file
+                            starspec = os.path.abspath(starspec)
+                        else:
+                            raise OSError(f"Error: {starspec} not found. Try providing an absolute path.")
+                    if not os.path.isfile(starspec):
+                        raise OSError(f"Error: {starspec} not found.")
+                    if not os.path.isfile("%s_hr.dat"%(starspec[:-4])):
+                        raise OSError("Error: %s_hr.dat not found; both %s and %s_hr.dat must be present."%(starspec[:-4],starspec,starspec[:-4]))
+
                     self._edit_namelist("radmod_namelist","NSTARFILE","1")
-                    self._edit_namelist("radmod_namelist","STARFILE","'%s.dat'"%starspec)
-                    self._edit_namelist("radmod_namelist","STARFILEHR","'%s_hr.dat'"%(starspec))
+                    self._edit_namelist("radmod_namelist","STARFILE","'%s'"%starspec)
+                    self._edit_namelist("radmod_namelist","STARFILEHR","'%s_hr.dat'"%(starspec[:-4]))
                 self.starspec = starspec
             if key=="pH2":
                 setgas=True
