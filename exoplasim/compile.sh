@@ -65,10 +65,10 @@ longitudes=64
 fftopt="fftmod"
 levels=10
 ncpus=1
-debug=0
+debug=1
 optimization=""
 nopt=0
-years=10
+years=1
 nmars=0
 
 while getopts "p:r:v:n:O:t:dhm" opt; do
