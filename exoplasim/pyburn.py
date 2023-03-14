@@ -3,10 +3,14 @@ Read raw exoplasim output files and postprocess them into netCDF output files.
 """
 import numpy as np
 import struct
-import exoplasim.gcmt
-import exoplasim.gcmt as gcmt
-import exoplasim.filesupport
-from exoplasim.filesupport import SUPPORTED
+# import exoplasim.gcmt
+# import exoplasim.gcmt as gcmt
+# import exoplasim.filesupport
+# from exoplasim.filesupport import SUPPORTED
+import gcmt
+import gcmt as gcmt
+import filesupport
+from filesupport import SUPPORTED
 import scipy, scipy.integrate, scipy.interpolate
 import os, sys
 
@@ -124,6 +128,7 @@ ilibrary = {"110":["mld"  ,"mixed_layer_depth"               ,"m"          ],
             "278":["flpr" ,"full_level_pressure"             ,"Pa"         ],
             "279":["thetah","half_level_potential_temperature","K"         ],
             "280":["theta","full_level_potential_temperature","K"          ],
+            "298":["vegf"     ,"forest_cover"                        ,"1"           ],
             "298":["vegf"     ,"forest_cover"                        ,"1"           ],
             "299":["veglai"   ,"vegetation_leaf_area_index"          ,"nondimen"    ],
             "300":["veggpp"   ,"vegetation_gross_primary_production" ,"kg C m-2 s-1"],
@@ -548,9 +553,11 @@ def readfile(filename):
     '''
     
     if sys.version[0]=="2":
-        import exoplasim.pyfft2 as pyfft
+#        import exoplasim.pyfft2 as pyfft
+        import pyfft as pyfft
     else:
-        import exoplasim.pyfft as pyfft
+#        import exoplasim.pyfft as pyfft
+        import pyfft as pyfft
     
     with open(filename,"rb") as fb:
         fbuffer = fb.read()
@@ -648,9 +655,11 @@ def _transformvar(lon,lat,variable,meta,nlat,nlon,nlev,ntru,ntime,mode='grid',
     '''
     
     if sys.version[0]=="2":
-        import exoplasim.pyfft2 as pyfft
+#        import exoplasim.pyfft2 as pyfft
+        import pyfft as pyfft 
     else:
-        import exoplasim.pyfft as pyfft
+#        import exoplasim.pyfft as pyfft
+        import pyfft as pyfft
     
     if nlev in variable.shape:
         levd = "lev"
@@ -946,9 +955,11 @@ def _transformvectorvar(lon,uvar,vvar,umeta,vmeta,lats,nlon,nlev,ntru,ntime,mode
     '''
     
     if sys.version[0]=="2":
-        import exoplasim.pyfft2 as pyfft
+#        import exoplasim.pyfft2 as pyfft
+        import pyfft as pyfft
     else:
-        import exoplasim.pyfft as pyfft
+#        import exoplasim.pyfft as pyfft
+        import pyfft as pyfft
     
     if np.nanmax(lats)>10: #Dealing with degrees, not radians
         rlats = lats*np.pi/180.0
@@ -2091,7 +2102,7 @@ def dataset(filename, variablecodes, mode='grid', zonal=False, substellarlon=180
     return rdataset
 
 
-def advancedDataset(filename, variablecodes, substellarlon=180.0,
+def advancedDataset(filename, variablecodes, mode='grid', substellarlon=180.0,
                     radius=1.0,gravity=9.80665,gascon=287.0,logfile=None):
     '''Read a raw output file, and construct a dataset.
     
