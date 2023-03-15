@@ -18,7 +18,7 @@
 
       use pumamod
 
-      logical,parameter :: aero_debug  = .FALSE.
+      logical,parameter :: aero_debug  = .TRUE.
       logical,parameter :: aero_zcross = .TRUE.
       logical,parameter :: aero_deform = .FALSE.
 
@@ -31,6 +31,8 @@
       
       integer :: l_source = 1 ! 1 = photochemical haze (source at top level)
                                       ! 2 = dust (source at bottom level)
+      integer :: l_bulk = 2 ! 1 = N2 atmosphere, 
+                            ! 2 = H2 atmosphere
 
       integer,parameter :: aero_cnst = 1   ! 1 = constant preserving
                                            ! 2 = mass conserving
@@ -51,7 +53,7 @@
       subroutine aero_ini
       use aeromod
       
-      namelist/aero_nl/l_source,apart,rhop,fcoeff
+      namelist/aero_nl/l_source,l_bulk,apart,rhop,fcoeff
 
       if (mypid==NROOT) then
          open(11,file=aero_namelist)

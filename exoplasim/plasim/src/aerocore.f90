@@ -873,6 +873,8 @@
 !   Calculate the viscosity of the bulk gas (molecular nitrogen, N2)
 !****6***0*********0*********0*********0*********0*********0**********72
     USE pumamod, ONLY: PI
+    USE aeromod, only: l_bulk
+    
     IMPLICIT NONE
     
 ! Dimensions of arrays
@@ -898,9 +900,15 @@
     REAL ::	rt_mair, rt_pi, rt_kb, sq_dair, coeff
     
     kb = 1.3806E-23 ! m2 kg s-2 K-1
-    mair = 4.652E-26 ! kg
-    dair = 3.64E-10 ! m
-    eps = 95.5 ! K
+    select case (l_bulk)
+    case(1)
+     mair = 4.652E-26 ! kg
+     dair = 3.64E-10 ! m
+     eps = 95.5 ! K
+    case(2)
+     mair = 3.34E-27
+     dair = 2.827E-10
+     eps = 59.7
     
 !---------------------------------------------------------------
 ! Calculation
@@ -925,6 +933,7 @@
 !   Calculate the Cunningham factor used in terminal velocity calculation
 !****6***0*********0*********0*********0*********0*********0**********72
     USE pumamod, ONLY: PI
+    USE aeromod, only: l_bulk
     
     IMPLICIT NONE
 
@@ -954,7 +963,11 @@
     REAL :: apart ! Particle radius
     
     kb = 1.3806E-23 ! J/K
-    rad = 0.5*3.64E-10 ! m
+    select case(l_bulk)
+    case(1)
+     rad = 0.5*3.64E-10 ! m
+    case(2)
+     rad = 0.5*2.827E-10 ! m
 
 !---------------------------------------------------------------
 ! Calculation of mean free path of the bulk gas
@@ -983,6 +996,8 @@
 !   Calculate the gas density in kg/m3 (input for terminal velocity calculation)
 !****6***0*********0*********0*********0*********0*********0**********72
 
+    USE aeromod, only: l_bulk
+    
     IMPLICIT NONE
     
 ! Dimensions of arrays
@@ -1006,7 +1021,12 @@
     REAL :: M_mass ! Molar mass of nitrogen
         
     R_gas = 8.314 ! SI units
-    M_mass = 0.0280 ! kg/mol for nitrogen
+    
+    select case (l_bulk)
+    case(1)
+     M_mass = 0.0280 ! kg/mol for nitrogen
+    case(2)
+     M_mass = 0.00201 ! kg/mol for H2
     
 ! Calculations
     
