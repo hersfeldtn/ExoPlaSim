@@ -158,7 +158,7 @@ def main():
     try:
         numw = int(sys.argv[3])
     except:
-        numw = 2048
+        numw = int(2048)
     try:
         norm = sys.argv[4]
     except:
@@ -176,7 +176,7 @@ def main():
     #plt.xlabel("$\lambda$ [$\mu$m]")
     #plt.ylabel("$F_\lambda$ [W/m$^2$/$\mu$m]")
     #plt.show()
-    w2 = np.concatenate([np.geomspace(0.2,0.75,num=numw/2+1)[:-1],np.geomspace(0.75,100.0,num=numw/2)])
+    w2 = np.concatenate([np.geomspace(0.2,0.75,num=int(numw/2)+1)[:-1],np.geomspace(0.75,100.0,num=int(numw/2))])
     plt.plot(w2)
     plt.yscale('log')
     plt.show()
