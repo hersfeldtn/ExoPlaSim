@@ -1421,7 +1421,7 @@ class Model(object):
                             "SIZETHRESH":30,"ENDTHRESH":16,"MINSTORMLEN":256,
                             "MAXSTORMLEN":1024,"NKTRIGGER":0,"toggle":0},
             topomap=None,threshold=5.0e-4,otherargs={"NQSPEC@plasim_namelist":'1',"NLOWIO@plasim_namelist":'1'},
-            aerosol=True,apart=5e-09,rhop=1000,asource=1,fcoeff=10e-13):
+            aerosol=True,aerobulk=1,apart=5e-09,rhop=1000,asource=1,fcoeff=10e-13):
 
         """Configure the model's namelists and boundary conditions.
         
@@ -2090,6 +2090,7 @@ References
             self._edit_namelist("aero_namelist","apart",str(apart))
             self._edit_namelist("aero_namelist","rhop",str(rhop))
             self._edit_namelist("aero_namelist","fcoeff",str(fcoeff))
+            self._edit_namelist("aero_namelist","l_bulk",str(aerobulk))
         elif aerosol==False:
             self._edit_namelist("plasim_namelist","L_AERO","0")
         self.aerosol=aerosol
