@@ -556,9 +556,10 @@ class Model(object):
                 try:
                     timeavg=self.postprocess(dataname,None,
                                             log="burnout",crashifbroken=crashifbroken)
-                    snapsht=self.postprocess(snapname,None,ftype="snapshot",
+                    if self.snapshots:
+                        snapsht=self.postprocess(snapname,None,ftype="snapshot",
                                             log="snapout",crashifbroken=crashifbroken)
-                    os.system("mv %s%s snapshots/"%(snapname,self.extension))
+                        os.system("mv %s%s snapshots/"%(snapname,self.extension))
                     if self.highcadence["toggle"]:
                         highcdn=self.postprocess(hcname  ,None,ftype="highcadence",
                                                 log="hcout"  ,crashifbroken=crashifbroken)
@@ -822,9 +823,10 @@ class Model(object):
                     try:
                         timeavg=self.postprocess(dataname,None,
                                                 log="burnout",crashifbroken=crashifbroken)
-                        snapsht=self.postprocess(snapname,None,ftype="snapshot",
+                        if self.snapshots:
+                            snapsht=self.postprocess(snapname,None,ftype="snapshot",
                                                 log="snapout",crashifbroken=crashifbroken)
-                        os.system("mv %s%s snapshots/"%(snapname,self.extension))
+                            os.system("mv %s%s snapshots/"%(snapname,self.extension))
                         if self.highcadence["toggle"]:
                             highcdn=self.postprocess(hcname  ,None,ftype="highcadence",
                                                     log="hcout"  ,crashifbroken=crashifbroken)
