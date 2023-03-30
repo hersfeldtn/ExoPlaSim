@@ -909,6 +909,7 @@
      mair = 3.34E-27
      dair = 2.827E-10
      eps = 59.7
+    end select
     
 !---------------------------------------------------------------
 ! Calculation
@@ -959,15 +960,16 @@
 ! Define constants
 
     REAL :: kb ! Boltzmann constant
-    REAL :: rad ! Molecular radius of N2
+    REAL :: rad ! Molecular radius of bulk gas
     REAL :: apart ! Particle radius
     
     kb = 1.3806E-23 ! J/K
-    select case(l_bulk)
+    select case(l_bulk) ! N2
     case(1)
      rad = 0.5*3.64E-10 ! m
-    case(2)
+    case(2) ! H2
      rad = 0.5*2.827E-10 ! m
+    end select
 
 !---------------------------------------------------------------
 ! Calculation of mean free path of the bulk gas
@@ -1020,13 +1022,14 @@
     REAL :: R_gas ! Gas constant for ideal gas law
     REAL :: M_mass ! Molar mass of nitrogen
         
-    R_gas = 8.314 ! SI units
+    R_gas = 8.314 ! SI units : J/K mol
     
     select case (l_bulk)
     case(1)
-     M_mass = 0.0280 ! kg/mol for nitrogen
+     M_mass = 0.0280 ! kg/mol for N2
     case(2)
      M_mass = 0.00201 ! kg/mol for H2
+    end select
     
 ! Calculations
     
@@ -1097,11 +1100,9 @@
     REAL,INTENT(OUT)   :: gz(im,jm,nl)
     
     gz = rhog*mmr*vterm
-	
+    
     where(gz .lt. 0.) gz = 0.0
-	
+    
     
     RETURN
     END
-
-
