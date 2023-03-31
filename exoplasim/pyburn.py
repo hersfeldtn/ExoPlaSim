@@ -3,10 +3,10 @@ Read raw exoplasim output files and postprocess them into netCDF output files.
 """
 import numpy as np
 import struct
-# import exoplasim.gcmt
-# import exoplasim.gcmt as gcmt
-# import exoplasim.filesupport
-# from exoplasim.filesupport import SUPPORTED
+import exoplasim.gcmt
+import exoplasim.gcmt as gcmt
+import exoplasim.filesupport
+from exoplasim.filesupport import SUPPORTED
 import gcmt
 import gcmt as gcmt
 import filesupport
@@ -553,10 +553,10 @@ def readfile(filename):
     '''
     
     if sys.version[0]=="2":
-#        import exoplasim.pyfft2 as pyfft
+        import exoplasim.pyfft2 as pyfft
         import pyfft as pyfft
     else:
-#        import exoplasim.pyfft as pyfft
+        import exoplasim.pyfft as pyfft
         import pyfft as pyfft
     
     with open(filename,"rb") as fb:
@@ -655,10 +655,10 @@ def _transformvar(lon,lat,variable,meta,nlat,nlon,nlev,ntru,ntime,mode='grid',
     '''
     
     if sys.version[0]=="2":
-#        import exoplasim.pyfft2 as pyfft
+        import exoplasim.pyfft2 as pyfft
         import pyfft as pyfft 
     else:
-#        import exoplasim.pyfft as pyfft
+        import exoplasim.pyfft as pyfft
         import pyfft as pyfft
     
     if nlev in variable.shape:
@@ -955,10 +955,10 @@ def _transformvectorvar(lon,uvar,vvar,umeta,vmeta,lats,nlon,nlev,ntru,ntime,mode
     '''
     
     if sys.version[0]=="2":
-#        import exoplasim.pyfft2 as pyfft
+        import exoplasim.pyfft2 as pyfft
         import pyfft as pyfft
     else:
-#        import exoplasim.pyfft as pyfft
+        import exoplasim.pyfft as pyfft
         import pyfft as pyfft
     
     if np.nanmax(lats)>10: #Dealing with degrees, not radians
