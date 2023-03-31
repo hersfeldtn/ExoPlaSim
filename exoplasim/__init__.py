@@ -2100,6 +2100,7 @@ References
         self.apart=apart
         self.rhop=rhop
         self.fcoeff=fcoeff
+        self.aerobulk=aerobulk
         if oceanzenith=="lambertian" or oceanzenith=="Lambertian" or oceanzenith=="uniform":
             self._edit_namelist("radmod_namelist","NECHAM","0")
             self._edit_namelist("radmod_namelist","NECHAM6","0")
@@ -3225,6 +3226,7 @@ References
         cfg.append(str(self.apart))
         cfg.append(str(self.rhop))
         cfg.append(str(self.fcoeff))
+        cfg.append(str(self.aerobulk))
         
         print("Writing configuration....\n"+"\n".join(cfg))
         print("Writing to %s...."%filename)
