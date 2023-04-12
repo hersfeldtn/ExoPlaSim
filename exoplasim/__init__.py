@@ -1104,7 +1104,7 @@ class Model(object):
                     if "stdev" not in kwargs:
                         kwargs["stdev"] = self.postprocessordefaults[ftype]["stdev"]
                 if variables is not None and "variables" in kwargs:
-                    newkwargs = {key:kwargs[key] for k in kwargs}
+                    newkwargs = {key:kwargs[key] for key in kwargs}
                     del newkwargs["variables"]
                 else:
                     newkwargs = kwargs
