@@ -1103,9 +1103,15 @@ class Model(object):
                         kwargs["timeaverage"] = self.postprocessordefaults[ftype]["timeaverage"]
                     if "stdev" not in kwargs:
                         kwargs["stdev"] = self.postprocessordefaults[ftype]["stdev"]
+                if variables is not None and "variables" in kwargs:
+                    newkwargs = {key:kwargs[key] for k in kwargs}
+                    del newkwargs["variables"]
+                else:
+                    newkwargs = kwargs
+                  
                 pyburn.postprocess(inputfile,inputfile+self.extension,logfile=log,namelist=namelist,
                                    variables=variables,radius=self.radius,
-                                   gravity=self.gravity,gascon=self.gascon,**kwargs)
+                                   gravity=self.gravity,gascon=self.gascon,**newkwargs)
                 #times = self.inspect("time",snapshot=(ftype=="snapshot"),highcadence=(ftype=="highcadence"))
                 #if transit:
                     #atm,transitoutput = self.transit(-1,times,snapshot=(ftype=="snapshot"),
