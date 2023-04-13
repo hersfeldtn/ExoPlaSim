@@ -618,7 +618,12 @@
 
       select case (l_source) ! Choose your aerosol source
       case(1) ! Case 1: photochemical haze
-        mmr(:,:,1,ic) = fcoeff*angle ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
+        if l_aerorad == 0
+            mmr(:,:,1,ic) = fcoeff*angle ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
+        endif
+        if l_aerorad == 1
+            mmr(:,:,:,ic) = fcoeff*aerosw/max(aerosw) ! At the max SW flux, the source strength is the input source
+        endif
       case(2) ! Case 2: dust
         mmr(:,:,NLEV,ic) = fcoeff*land ! At k=surface, land grid boxes are given the abundance fcoeff (kg/kg) and sea is given 0
       end select
