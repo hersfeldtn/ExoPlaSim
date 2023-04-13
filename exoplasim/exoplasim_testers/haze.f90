@@ -5,42 +5,58 @@ PROGRAM generate_data
 
 	INTEGER,PARAMETER :: im=3
 	INTEGER,PARAMETER :: jm=3
-	INTEGER,PARAMETER :: nl=6
+	INTEGER,PARAMETER :: nl=10
 	INTEGER,PARAMETER :: ts=10
     INTEGER,PARAMETER :: NAERO=1
-	INTEGER :: i,j,k,t
+	INTEGER :: i,j,k,t,ic
 
 
-	REAL :: ta(im,jm,nl)
-	REAL :: sigma(im,jm,nl)
-	REAL :: ps(im,jm,nl)
-	REAL :: rhog(im,jm,nl)
-	REAL :: dh(im,jm,nl-1)
-    REAL :: mmr(im,jm,nl,NAERO)
-    REAL :: numrho(im,jm,nl,NAERO)
+	REAL :: ta(im,jm,nl) ! Air temperature
+	REAL :: sigma(nl) ! Model level
+	REAL :: ps(im,jm) ! Surface pressure
+	REAL :: rhog(im,jm,nl) ! Air density
+	REAL :: dh(im,jm,nl-1) ! Height thickness
+    REAL :: mmr(im,jm,nl,NAERO) ! Mass mixing ratio
+    REAL :: numrho(im,jm,nl,NAERO) ! Number density
+    REAL :: trscat(im,jm,nl) ! Transmissivity from scattering
+    
+    REAL :: rhop
+    REAL :: apart
+    REAL :: qscat
+    
+    ps = 101325
+    sigma = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
 
-	DO k=1,nl
-		DO i=1,im
-			DO j=1,jm
-				ta(i,j,k) = 300.-i-j-k
-				ps(i,j,k) = 101325
-				sigma(i,j,k) = 101325-i-j-10*k
-                mmr(i,j,k,NAERO) = 3e-13-i*0.15e-13+j*0.3e-13-k*1.2e-13
-			END DO
-		END DO
-	END DO
-	
-    call density(im,jm,nl,ta,ps,sigma,rhog)
-    call hthick(im,jm,nl,sigma,ps,rhog,dh)
-	
-	WRITE(*,*) rhog,dh
+    rhop = 1262 ! kg/m3
+    apart = 60e-09 ! m
+    qscat = 3.003450192354858
+
+    DO ic=1,NAERO
+        DO k=1,nl
+            DO i=1,im
+                DO j=1,jm
+                    ta(i,j,k) = 300.-i-j-k
+                    mmr(i,j,k,ic) = 3e-13-i*0.15e-13+j*0.3e-13-k*1.2e-13
+                END DO
+            END DO
+        END DO
+        where(mmr(:,:,:,ic) .le. 0.) mmr(:,:,:,ic) = 0
+        mmr(:,:,1,ic) = 3e-12
+        call density(im,jm,nl,ta,ps,sigma,rhog)
+        call hthick(im,jm,nl,sigma,ps,rhog,dh)
+        call mmr2n(mmr(:,:,:,ic),apart,rhop,rhog,im,jm,nl,numrho(:,:,:,ic))
+        call atrscat(im,jm,nl,numrho,qscat,apart,dh,trscat)
+        
+        WRITE(*,*) numrho(:,:,:,ic), trscat
+        
+    ENDDO
 	
 
 END PROGRAM
 
 
 
-    SUBROUTINE density(im,jm,nl,temp,ps,sigmah,   &
+    SUBROUTINE density(im,jm,nl,temp,ps,sigma,   &
                         rhog)
 
 !   Calculate the gas density in kg/m3 (input for terminal velocity calculation)
@@ -55,7 +71,7 @@ END PROGRAM
 ! Define arrays
 
     REAL,INTENT(IN) :: temp(im,jm,nl) ! Temperature
-    REAL,INTENT(IN) :: sigmah(nl) ! Sigma
+    REAL,INTENT(IN) :: sigma(nl) ! Sigma
     REAL,INTENT(IN) :: ps(im,jm) ! Surface air pressure
     REAL,INTENT(OUT) :: rhog(im,jm,nl) ! Density of surrounding gas
 
@@ -74,9 +90,9 @@ END PROGRAM
 ! Calculations
     
     DO k=1,nl
-        airp(:,:,k) = ps(:,:)*sigmah(k) ! Air pressure at mid level in Pa
+        airp(:,:,k) = ps(:,:)*sigma(k) ! Air pressure at mid level in Pa
     ENDDO
-        
+
     rhog = (airp*M_mass)/(R_gas*temp)
     
     RETURN
@@ -119,41 +135,40 @@ END PROGRAM
         ph(:,:,k) = airp(:,:,k) - airp(:,:,k+1)
     ENDDO
     
-    dh = ph/(grav*rhog)
+    dh = abs(ph/(grav*rhog))
     
     RETURN
     END
     
 
 !****6***0*********0*********0*********0*********0*********0**********72
-    SUBROUTINE mmr2n(mmr,apart,rhop,rhog,NAERO,im,jm,nl,   &
+    SUBROUTINE mmr2n(mmr,apart,rhop,rhog,im,jm,nl,   &
                       numrho)
 ! Convert mass mixing ratio (kg/kg) from aerocore into number density (particles/m3)
 !****6***0*********0*********0*********0*********0*********0**********72
     IMPLICIT NONE
     
-    integer,intent(in) :: NAERO,im,jm,nl
-    real,intent(in) ::   mmr(im,jm,nl,NAERO) ! Mixing ratio of aerosol
+    integer,intent(in) :: im,jm,nl
+    real,intent(in) ::   mmr(im,jm,nl) ! Mixing ratio of aerosol
     real,intent(in)    :: apart ! Particle radius
     real,intent(in)    :: rhop ! Particle density
-    real,intent(in)    :: rhog ! Bulk gas density
-    real,intent(out) :: numrho(im,jm,nl,NAERO) ! Number density of aerosol
+    real,intent(in)    :: rhog(im,jm,nl) ! Bulk gas density
+    real,intent(out) :: numrho(im,jm,nl) ! Number density of aerosol
     
     REAL :: PI ! Value of pi
+    REAL :: svol
+    REAL :: mpart
     PI = 3.14159
-    rhop = 1262 ! kg/m3
-    apart = 0.5e-06 ! m
     
     svol = (4/3)*PI*(apart**3) ! Sphere volume
     mpart = svol*rhop
-    
     numrho = mmr*(1/mpart)*rhog
     RETURN
     END
     
     
 !****6***0*********0*********0*********0*********0*********0**********72
-    SUBROUTINE atrscat(im,jm,nl,numrho,qscat,apart,dz,   &
+    SUBROUTINE atrscat(im,jm,nl,numrho,qscat,apart,dh,   &
                       trscat)
 ! Convert mass mixing ratio (kg/kg) from aerocore into number density (particles/m3)
 !****6***0*********0*********0*********0*********0*********0**********72
@@ -162,18 +177,19 @@ END PROGRAM
     INTEGER,INTENT(IN) :: im,jm,nl ! Length of x, y, and z dimensions
     
     REAL,INTENT(IN) :: numrho(im,jm,nl)
-    REAL,INTENT(IN) :: dz(im,jm,nl)
+    REAL,INTENT(IN) :: dh(im,jm,nl)
     REAL,INTENT(IN) :: qscat
     REAL,INTENT(IN) :: apart
     
     REAL,INTENT(OUT) :: trscat(im,jm,nl)
     
-    qscat = 2.7881319182436437
-    apart = 0.5e-06
+    REAL :: PI ! Value of pi
+    REAL :: xsec
+    
     PI = 3.14159
     
     xsec = PI*(apart**2)*qscat
-    trscat = exp(-numrho*dz)
+    trscat = exp(-numrho*xsec*dh)
     
     RETURN
     END
