@@ -3147,6 +3147,25 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       endif ! nkits
       call guihor("DQ" // char(0),dq,NLEV,1000.0,0.0)
 
+!     aerosol transport
+  
+      if (nsela == 1 .and. nkits == 0 .and. l_aero > 0) then
+        mmrt(:,:) = mmr(:,:) ! Save old value of mmr
+        call mpgagp(zmmr,mmr,NLEV)
+        if (mypid == NROOT) then
+         do jlat = 1 , NLAT
+          daeros(:,NLAT+1-jlat,:,1) = zmmr(:,jlat,:)
+         enddo ! jlat
+        endif ! mypid
+        call aero_main
+        if (mypid == NROOT) then
+         do jlat = 1 , NLAT
+          zmmr(:,jlat,:) = daeros(:,NLAT+1-jlat,:,1)
+         enddo
+        endif ! mypid
+        call mpscgp(zmmr,mmr,NLEV)
+        mmrt(:,:) = (mmr(:,:) - mmrt(:,:)) / deltsec !  q advection term       endif !  
+      endif ! nkits
 !
 !     compute output specific humidity
 !
@@ -3273,27 +3292,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 !     h) hurricane/storm diagnostics
 !
       
-      call hurricanestep  
-	  
-!     i) aerosol transport
-  
-      if (nsela == 1 .and. nkits == 0 .and. l_aero > 0) then
-        mmrt(:,:) = mmr(:,:) ! Save old value of mmr
-        call mpgagp(zmmr,mmr,NLEV)
-        if (mypid == NROOT) then
-         do jlat = 1 , NLAT
-          daeros(:,NLAT+1-jlat,:,1) = zmmr(:,jlat,:)
-         enddo ! jlat
-        endif ! mypid
-        call aero_main
-        if (mypid == NROOT) then
-         do jlat = 1 , NLAT
-          zmmr(:,jlat,:) = daeros(:,NLAT+1-jlat,:,1)
-         enddo
-        endif ! mypid
-        call mpscgp(zmmr,mmr,NLEV)
-        mmrt(:,:) = (mmr(:,:) - mmrt(:,:)) / deltsec !  q advection term       endif !  
-      endif ! nkits 
+      call hurricanestep   
 
 !
 !     END OF PARAMETERISATION ROUTINES
