@@ -19,17 +19,20 @@ PROGRAM generate_data
     REAL :: mmr(im,jm,nl,NAERO) ! Mass mixing ratio
     REAL :: numrho(im,jm,nl,NAERO) ! Number density
     REAL :: trscat(im,jm,nl) ! Transmissivity from scattering
+    REAL :: trabs(im,jm,nl) ! Transmissivity from absorption
     
     REAL :: rhop
     REAL :: apart
     REAL :: qscat
+    REAL :: qxt
     
     ps = 101325
     sigma = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
 
-    rhop = 1262 ! kg/m3
-    apart = 60e-09 ! m
-    qscat = 3.003450192354858
+    rhop = 1000 ! kg/m3
+    apart = 50e-09 ! m
+    qxt = 0.03907271356057308
+    qscat = 0.030483601320398214
 
     DO ic=1,NAERO
         DO k=1,nl
@@ -46,8 +49,9 @@ PROGRAM generate_data
         call hthick(im,jm,nl,sigma,ps,rhog,dh)
         call mmr2n(mmr(:,:,:,ic),apart,rhop,rhog,im,jm,nl,numrho(:,:,:,ic))
         call atrscat(im,jm,nl,numrho,qscat,apart,dh,trscat)
+        call atrabs(im,jm,nl,numrho,qscat,qxt,apart,dh,trabs)
         
-        WRITE(*,*) numrho(:,:,:,ic), trscat
+        WRITE(*,*) numrho(:,:,:,ic), trscat*trabs
         
     ENDDO
 	
@@ -170,7 +174,7 @@ END PROGRAM
 !****6***0*********0*********0*********0*********0*********0**********72
     SUBROUTINE atrscat(im,jm,nl,numrho,qscat,apart,dh,   &
                       trscat)
-! Convert mass mixing ratio (kg/kg) from aerocore into number density (particles/m3)
+! Calculate transmissivity due to scattering
 !****6***0*********0*********0*********0*********0*********0**********72
     IMPLICIT NONE
 
@@ -190,6 +194,34 @@ END PROGRAM
     
     xsec = PI*(apart**2)*qscat
     trscat = exp(-numrho*xsec*dh)
+    
+    RETURN
+    END
+    
+!****6***0*********0*********0*********0*********0*********0**********72
+    SUBROUTINE atrabs(im,jm,nl,numrho,qscat,qxt,apart,dh,   &
+                      trabs)
+! Calculate transmissivity due to absorption
+!****6***0*********0*********0*********0*********0*********0**********72
+    IMPLICIT NONE
+
+    INTEGER,INTENT(IN) :: im,jm,nl ! Length of x, y, and z dimensions
+    
+    REAL,INTENT(IN) :: numrho(im,jm,nl)
+    REAL,INTENT(IN) :: dh(im,jm,nl)
+    REAL,INTENT(IN) :: qscat
+    REAL,INTENT(IN) :: qxt
+    REAL,INTENT(IN) :: apart
+    
+    REAL,INTENT(OUT) :: trabs(im,jm,nl)
+    
+    REAL :: PI ! Value of pi
+    REAL :: xsec
+    
+    PI = 3.14159
+    
+    xsec = PI*(apart**2)*(qxt-qscat)
+    trabs = exp(-numrho*xsec*dh)
     
     RETURN
     END
