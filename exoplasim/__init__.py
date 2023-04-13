@@ -1103,12 +1103,12 @@ class Model(object):
                         kwargs["timeaverage"] = self.postprocessordefaults[ftype]["timeaverage"]
                     if "stdev" not in kwargs:
                         kwargs["stdev"] = self.postprocessordefaults[ftype]["stdev"]
-                if variables is not None and "variables" in kwargs:
-                    newkwargs = {key:kwargs[key] for key in kwargs}
+                
+                newkwargs = {key:kwargs[key] for key in kwargs}
+                if "variables" in newkwargs:
                     del newkwargs["variables"]
-                else:
-                    newkwargs = kwargs
-                  
+                if "namelist" in newkwargs:
+                    del newkwargs["namelist"]
                 pyburn.postprocess(inputfile,inputfile+self.extension,logfile=log,namelist=namelist,
                                    variables=variables,radius=self.radius,
                                    gravity=self.gravity,gascon=self.gascon,**newkwargs)
