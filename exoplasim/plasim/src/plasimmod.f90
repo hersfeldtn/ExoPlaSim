@@ -213,7 +213,7 @@
       integer :: nqspec   = 0   ! 1: spectral q   0: gridpoint q (semi-Langrangian)
       integer :: nrdrag   = 0   ! 1: Apply Rayleigh fraction to 20-layer atmosphere
       integer :: l_aero    = 1   ! 1: Aerosols on; this also enables the semi-Lagrangian advection tracer grid initialisations
-      integer :: l_aerorad = 1 ! 1: Aerosol radiative transfer option on. These blocks will only run if l_aero=1 as well.
+      integer :: l_aerorad = 0 ! 1: Aerosol radiative transfer option on. These blocks will only run if l_aero=1 as well.
 !>>> AYP -- NEEDED AS PART OF GLACIERMOD      
       integer :: nglspec = 0
 !>>> AYP      

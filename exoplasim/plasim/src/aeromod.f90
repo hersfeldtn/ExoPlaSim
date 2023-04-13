@@ -53,7 +53,7 @@
       subroutine aero_ini
       use aeromod
       
-      namelist/aero_nl/l_source,l_bulk,apart,rhop,fcoeff
+      namelist/aero_nl/l_source,l_bulk,apart,rhop,fcoeff,l_aerorad
 
       if (mypid==NROOT) then
          open(11,file=aero_namelist)
@@ -79,7 +79,7 @@
 
       use pumamod, only: du,dv,dp,du0,dv0,dp0,daeros, &
                          NLON,NLAT,NLEV,NAERO,       &
-                         mypid,NROOT,sigmah,dt,dls
+                         mypid,NROOT,sigmah,dt,dls,dswfl
       use tracermod
       use aeromod
       use radmod, only: gmu0 ! Use cosine of solar zenith angle from radmod; used to define haze production profile at top level
@@ -94,6 +94,7 @@
       real :: x (NLON+1,NLAT,NLEV,NAERO)  ! for GUI output
       real :: y (NLON+1,NLAT,NLEV)         ! for GUI output
       real ::   angle(NLON,NLAT) ! Array for cosine of solar zenith angle
+      real ::   aerosw(NLON,NLAT,NLEV) ! Array for SW flux 
       real ::   land(NLON,NLAT) ! Array for binary land mask
 
       integer :: j,jc
@@ -107,8 +108,12 @@
 
       select case (l_source) ! Choose your aerosol source
       case(1) ! Case 1: photochemical haze
-       call solang ! Use subroutine from radmod to calculate solar zenith angle
-       call mpgagp(angle,gmu0,1) ! Gather from nodes
+        if l_aerorad == 0
+            call solang ! Use subroutine from radmod to calculate solar zenith angle
+            call mpgagp(angle,gmu0,1) ! Gather from nodes
+        endif
+        if l_aerorad == 1
+            call mpgagp(aerosw, dwfl,1) ! Gather SW flux from nodes
       case(2) ! Case 2: dust
        call mpgagp(land,dls,1) ! Import land-sea mask from landmod and reshape to match grid size
       end select ! 
@@ -140,7 +145,7 @@
                       colae,colad,rcolad,dlat,rcap,       &
                       aero_cnst,aero_deform,aero_zcross,  &
                       aero_fill,aero_mfct,aero_debug,nud, &
-                      angle,land)
+                      angle,land,aerosw,l_aerorad)
 
 !        preparation for the GUI output: 
 !        invert the meridional direction and add the 360 deg. longitude

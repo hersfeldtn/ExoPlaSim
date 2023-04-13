@@ -12,7 +12,8 @@
                         iml,j1,j2,js0,jn0,                &
                         cose,cosp,acosp,dlat,rcap,        &
                         cnst,deform,zcross,               &
-                        fill,mfct,debug,nud,angle,land)
+                        fill,mfct,debug,nud,angle,land,   &
+                        aerosw,l_aerorad)
 !****6***0*********0*********0*********0*********0*********0**********72
 !
 ! The subroutine aerocore is a duplicate of the tracer transport
@@ -252,7 +253,7 @@
 ! Input-Output variables
 
       integer,intent(in) :: NAERO,im,jm,nl,iml,j1,j2,js0,jn0 ! Input variables passed from other modules
-      integer,intent(in) :: iord,jord,kord,cnst,l_source
+      integer,intent(in) :: iord,jord,kord,cnst,l_source,l_aerorad
 
 ! Input-Output arrays
 
@@ -294,6 +295,7 @@
       real ::   rhog(im,jm,nl) ! Array for gas density calculated in routine
       real ::   angle(im,jm) ! Array for cosine of solar zenith angle
       real ::   land(im,jm) ! Array for binary land mask
+      real ::   aerosw(im,jm,nl) ! Array for net SW flux
 
 ! scalars
 
