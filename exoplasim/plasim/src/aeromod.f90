@@ -114,6 +114,7 @@
         endif
         if l_aerorad == 1
             call mpgagp(aerosw, dwfl,1) ! Gather SW flux from nodes
+        endif
       case(2) ! Case 2: dust
        call mpgagp(land,dls,1) ! Import land-sea mask from landmod and reshape to match grid size
       end select ! 
