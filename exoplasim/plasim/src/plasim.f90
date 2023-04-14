@@ -811,6 +811,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call mpputgp('dq'  ,dq,NHOR,NLEP)
       if (l_aero > 0) then
          call mpputgp('mmr' ,mmr,NHOR,NLEP)
+         call mpputgp('nrho',nrho,NHOR,NLEP)
       endif
       endif
 !
@@ -855,6 +856,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpputgp('aasz'        ,aasz    ,NESP,NLEV)   
       call mpputgp('aadq'        ,aadq    ,NHOR,NLEP) 
       call mpputgp('aammr'       ,aammr   ,NHOR,NLEP)
+      call mpputgp('aanrho'      ,aanrho  ,NHOR,NLEP)
       call mpputgp('aadmld'      ,aadmld  ,NHOR,1)      
       call mpputgp('aadt'        ,aadt    ,NHOR,NLEP)   
       call mpputgp('aadwatc'     ,aadwatc ,NHOR,1)     
@@ -1038,6 +1040,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call mpgetgp('dq',dq,NHOR,NLEP)
       if (l_aero > 0) then
          call mpgetgp('mmr',mmr,NHOR,NLEP)
+         call mpgetgp('nrho',nrho,NHOR,NLEP)
       endif
       endif
 
@@ -1081,7 +1084,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpgetgp('aasd'        ,aasd    ,NESP,NLEV)   
       call mpgetgp('aasz'        ,aasz    ,NESP,NLEV)   
       call mpgetgp('aadq'        ,aadq    ,NHOR,NLEP)
-      call mpgetgp('aammr'       ,aammr   ,NHOR,NLEP)  
+      call mpgetgp('aammr'       ,aammr   ,NHOR,NLEP)
+      call mpgetgp('aanrho'      ,aanrho  ,NHOR,NLEP)
       call mpgetgp('aadmld'      ,aadmld  ,NHOR,1)      
       call mpgetgp('aadt'        ,aadt    ,NHOR,NLEP)   
       call mpgetgp('aadwatc'     ,aadwatc ,NHOR,1)     
@@ -3080,7 +3084,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 
       real zqout(NHOR,NLEV)
       real zgq(NLON,NLAT,NLEV)
-	  real zmmr(NLON,NLAT,NLEV)
+      real zmmr(NLON,NLAT,NLEV)
+      real znrho(NLON,NLAT,NLEV)
 !
 !*    Diabatic Gridpoint Calculations
 !
@@ -3152,18 +3157,22 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       if (nsela == 1 .and. nkits == 0 .and. l_aero > 0) then
         mmrt(:,:) = mmr(:,:) ! Save old value of mmr
         call mpgagp(zmmr,mmr,NLEV)
+        call mpgagp(znrho,nrho,NLEV)
         if (mypid == NROOT) then
          do jlat = 1 , NLAT
           daeros(:,NLAT+1-jlat,:,1) = zmmr(:,jlat,:)
+          numrhos(:,NLAT+1-jlat,:,1) = znrho(:,jlat,:)
          enddo ! jlat
         endif ! mypid
         call aero_main
         if (mypid == NROOT) then
          do jlat = 1 , NLAT
           zmmr(:,jlat,:) = daeros(:,NLAT+1-jlat,:,1)
+          znrho(:,jlat,:) = numrhos(:,NLAT+1-jlat,:,1)
          enddo
         endif ! mypid
         call mpscgp(zmmr,mmr,NLEV)
+        call mpscgp(znrho,nrho,NLEV)
         mmrt(:,:) = (mmr(:,:) - mmrt(:,:)) / deltsec !  q advection term       endif !  
       endif ! nkits
 !

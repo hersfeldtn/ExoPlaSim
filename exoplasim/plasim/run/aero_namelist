@@ -1,8 +1,9 @@
  &aero_nl
  l_source     =     1
- l_bulk       =     2
+ l_bulk       =     1
  apart    =     5E-09
  rhop    =     1000
  fcoeff  =     10E-13
+ l_aerorad = 1
  /END
  

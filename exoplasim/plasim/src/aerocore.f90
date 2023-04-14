@@ -5,7 +5,7 @@
 !=======================================================================
 !
 !****6***0*********0*********0*********0*********0*********0**********72
-      subroutine aerocore(mmr,l_source,sigmah,dt,ps1,ps2, &
+      subroutine aerocore(mmr,numrhos,l_source,sigmah,dt,ps1,ps2, &
                         u,v,dtoa,dtdx,apart,rhop,fcoeff,  &
                         iord,jord,kord,                   &
                         NAERO,im,jm,nl,dap,dbk,           &
@@ -296,6 +296,7 @@
       real ::   angle(im,jm) ! Array for cosine of solar zenith angle
       real ::   land(im,jm) ! Array for binary land mask
       real ::   aerosw(im,jm,nl) ! Array for net SW flux
+      real ::   numrhos(im,jm,nl,NAERO) ! Number density of aerosol in particles/m3 (converted from mass mixing ratio)
 
 ! scalars
 
@@ -850,6 +851,8 @@
 ! Finally, put in a sink term at the bottom level to avoid infinite build-up of haze particles	  
       mmr(:,:,nl,ic) = mmr(:,:,nl,ic)*10e-3
       where(mmr .lt. 0.) mmr = 0.0
+      
+      call mmr2n(mmr(:,:,:,ic),apart,rhop,rhog,im,jm,nl,numrho(:,:,:,ic))
 
 5000  continue !tracer loop
 
@@ -1111,5 +1114,30 @@
     where(gz .lt. 0.) gz = 0.0
     
     
+    RETURN
+    END
+    
+!****6***0*********0*********0*********0*********0*********0**********72
+    SUBROUTINE mmr2n(mmr,apart,rhop,rhog,im,jm,nl,   &
+                      numrho)
+! Convert mass mixing ratio (kg/kg) from aerocore into number density (particles/m3)
+!****6***0*********0*********0*********0*********0*********0**********72
+    USE pumamod, ONLY: PI
+
+    IMPLICIT NONE
+    
+    integer,intent(in) :: im,jm,nl
+    real,intent(in) ::   mmr(im,jm,nl) ! Mixing ratio of aerosol
+    real,intent(in)    :: apart ! Particle radius
+    real,intent(in)    :: rhop ! Particle density
+    real,intent(in)    :: rhog(im,jm,nl) ! Bulk gas density
+    real,intent(out) :: numrho(im,jm,nl) ! Number density of aerosol
+    
+    REAL :: svol
+    REAL :: mpart
+    
+    svol = (4/3)*PI*(apart**3) ! Sphere volume
+    mpart = svol*rhop
+    numrho = mmr*(1/mpart)*rhog
     RETURN
     END

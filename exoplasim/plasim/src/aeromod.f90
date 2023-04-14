@@ -31,7 +31,7 @@
       
       integer :: l_source = 1 ! 1 = photochemical haze (source at top level)
                                       ! 2 = dust (source at bottom level)
-      integer :: l_bulk = 2 ! 1 = N2 atmosphere, 
+      integer :: l_bulk = 1 ! 1 = N2 atmosphere, 
                             ! 2 = H2 atmosphere
 
       integer,parameter :: aero_cnst = 1   ! 1 = constant preserving
@@ -77,7 +77,7 @@
 
       subroutine aero_main
 
-      use pumamod, only: du,dv,dp,du0,dv0,dp0,daeros, &
+      use pumamod, only: du,dv,dp,du0,dv0,dp0,daeros,numrhos, &
                          NLON,NLAT,NLEV,NAERO,       &
                          mypid,NROOT,sigmah,dt,dls,dswfl
       use tracermod
@@ -137,7 +137,7 @@
     
       if (mypid == NROOT) then
 
-         call aerocore(daeros,l_source,sigmah,dt,         &
+         call aerocore(daeros,numrhos,l_source,sigmah,dt,         &
                       zps0,zps1,zu,zv,                    &
                       dtoa,dtdx,apart,rhop,fcoeff,        &
                       aero_iord,aero_jord,aero_kord,      & 

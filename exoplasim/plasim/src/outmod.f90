@@ -345,6 +345,7 @@
         if (l_aero > 0) then !
            do jlev = 1 , NLEV
               call writegp(40,mmr(:,jlev),410,jlev)
+              call writegp(40,nrho(:,jlev),411,jlev)
            enddo
         endif
       
@@ -368,6 +369,8 @@
            do jlev = 1, NLEV
               aammr(:,jlev) = aammr(:,jlev)/real(naccuout)
               call writegp(40,aammr(1,jlev),410,jlev)
+              aanrho(:,jlev) = aanrho(:,jlev)/real(naccuout)
+              call writegp(40,aanrho(1,jlev),411,jlev)
            enddo
         endif
         
@@ -1211,6 +1214,7 @@
         if (l_aero > 0) then
            do jlev = 1, NLEV
               call writegp(140,mmr(:,jlev),410,jlev)
+              call writegp(140,nrho(:,jlev),411,jlev)
            enddo
         endif
 

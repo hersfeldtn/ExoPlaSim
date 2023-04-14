@@ -347,7 +347,8 @@
 
       real :: dt(NHOR,NLEP)   = 0.     ! temperature 
       real :: dq(NHOR,NLEP)   = 0.     ! spec. humidity
-      real :: mmr(NHOR,NLEP) = 0.
+      real :: mmr(NHOR,NLEP) = 0.      ! Aerosol array (kg/kg)
+      real :: nrho(NHOR,NLEP) = 0.     ! Aerosol array (particles/m3)
       real :: du(NHOR,NLEP)   = 0.     ! zonal wind [m/s]
       real :: dv(NHOR,NLEP)   = 0.     ! meridional wind [m/s]
       real :: dp(NHOR)        = 0.     ! surface pressure
@@ -365,7 +366,8 @@
       real :: du0(NHOR,NLEP)  = 0.     ! zonal wind at time t 
       real :: dv0(NHOR,NLEP)  = 0.     ! meridional wind at time t 
       real :: dtrace(NLON,NLAT,NLEV,NTRACE) = 1.0 ! Trace array
-      real :: daeros(NLON,NLAT,NLEV,NAERO) = 0.0 ! Aerosol array
+      real :: daeros(NLON,NLAT,NLEV,NAERO) = 0.0 ! Aerosol array (kg/kg) - for aerocore
+      real :: numrhos(NLON,NLAT,NLEV,NAERO) = 0.0 ! Aerosol array (particles/m3) - for radmod
       
       real :: mint(NHOR) = 0.0 !Minimum troposphere temperature 
       
@@ -531,7 +533,8 @@
       real :: aasd(NESP,NLEV)     = 0.
       real :: aasz(NESP,NLEV)     = 0.
       real :: aadq(NHOR,NLEP)     = 0.
-      real :: aammr(NHOR,NLEP)    = 0. ! Accumulated aerosol mmr 
+      real :: aammr(NHOR,NLEP)    = 0. ! Accumulated aerosol mmr (kg/kg)
+      real :: aanrho(NHOR,NLEP)   = 0. ! Accumulated aerosol number density (particles/m3)
       real :: aadmld(NHOR)        = 0.
       real :: aadt(NHOR,NLEP)     = 0.
       real :: aadwatc(NHOR)       = 0.
