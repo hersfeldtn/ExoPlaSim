@@ -1423,7 +1423,7 @@ class Model(object):
                             "SIZETHRESH":30,"ENDTHRESH":16,"MINSTORMLEN":256,
                             "MAXSTORMLEN":1024,"NKTRIGGER":0,"toggle":0},
             topomap=None,threshold=5.0e-4,otherargs={"NQSPEC@plasim_namelist":'1',"NLOWIO@plasim_namelist":'1'},
-            aerosol=True,aerobulk=1,apart=5e-09,rhop=1000,asource=1,fcoeff=10e-13):
+            aerosol=True,aerobulk=1,apart=5e-09,rhop=1000,asource=1,fcoeff=10e-13,aerorad=1):
 
         """Configure the model's namelists and boundary conditions.
         
@@ -2093,6 +2093,7 @@ References
             self._edit_namelist("aero_namelist","rhop",str(rhop))
             self._edit_namelist("aero_namelist","fcoeff",str(fcoeff))
             self._edit_namelist("aero_namelist","l_bulk",str(aerobulk))
+            self._edit_namelist("aero_namelist","l_aerorad",str(aerorad))
         elif aerosol==False:
             self._edit_namelist("plasim_namelist","L_AERO","0")
         self.aerosol=aerosol
@@ -2101,6 +2102,7 @@ References
         self.rhop=rhop
         self.fcoeff=fcoeff
         self.aerobulk=aerobulk
+        self.aerorad=aerorad
         if oceanzenith=="lambertian" or oceanzenith=="Lambertian" or oceanzenith=="uniform":
             self._edit_namelist("radmod_namelist","NECHAM","0")
             self._edit_namelist("radmod_namelist","NECHAM6","0")
@@ -3227,6 +3229,7 @@ References
         cfg.append(str(self.rhop))
         cfg.append(str(self.fcoeff))
         cfg.append(str(self.aerobulk))
+        cfg.append(str(self.aerorad))
         
         print("Writing configuration....\n"+"\n".join(cfg))
         print("Writing to %s...."%filename)
