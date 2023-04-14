@@ -1471,6 +1471,7 @@
 
       subroutine swr
       use radmod
+      use aeromod, only: l_aerorad
 !
 !     calculate short wave radiation fluxes
 !
@@ -1497,9 +1498,11 @@
 !     dq(NHOR,NLEP)    : specific humidity (kg/kg) (used)
 !     dql(NHOR,NLEP)   : cloud liquid water content (kg/kg) (used)
 !     dcc(NHOR,NLEP)   : cloud cover (frac.) (used)
+!     nrho(NHOR,NLEP)  : number density of aerosol (particles/m3) (used if l_aerorad = 1)
 !     dswfl(NHOR,NLEP) : short wave radiation (W/m2)  (modified)
 !     dfu(NHOR,NLEP)   : short wave radiation upward (W/m2) (modified)
 !     dfd(NHOR,NLEP)   : short wave radiation downward (W/m2) (modified)
+
 !
 !     0) define local parameters and arrays
 !
@@ -1725,6 +1728,12 @@
         
        endwhere
       end do
+      
+!     aerosol block
+      if l_aerorad == 1 then
+      
+      
+      endif
 !
 !     compute optical properties
 !

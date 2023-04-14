@@ -33,6 +33,7 @@
                                       ! 2 = dust (source at bottom level)
       integer :: l_bulk = 1 ! 1 = N2 atmosphere, 
                             ! 2 = H2 atmosphere
+      integer :: l_aerorad = 0 ! 1 = include radiative transfer (radmod); 0 = passive tracers only
 
       integer,parameter :: aero_cnst = 1   ! 1 = constant preserving
                                            ! 2 = mass conserving
