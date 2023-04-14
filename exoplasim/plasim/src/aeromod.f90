@@ -109,11 +109,11 @@
 
       select case (l_source) ! Choose your aerosol source
       case(1) ! Case 1: photochemical haze
-        if l_aerorad == 0
+        if l_aerorad == 0 then
             call solang ! Use subroutine from radmod to calculate solar zenith angle
             call mpgagp(angle,gmu0,1) ! Gather from nodes
         endif
-        if l_aerorad == 1
+        if l_aerorad == 1 then
             call mpgagp(aerosw, dwfl,1) ! Gather SW flux from nodes
         endif
       case(2) ! Case 2: dust
