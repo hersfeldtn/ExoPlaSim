@@ -204,6 +204,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       enddo
 
       call mpbci(nfixorb ) ! Global switch to fix orbit
+      call mpbci(ngenkeplerian) ! Global switch for general Keplerian orbits
       call mpbci(ntpal   ) ! color pallet for T
 
       call mpbci(kick    ) ! add noise for kick > 0
@@ -307,6 +308,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpbcr(eccen)
       call mpbcr(obliq)
       call mpbcr(mvelp)
+      call mpbcr(meananom0)
       call mpbcr(plavor)
       call mpbcr(dampsp)
       call mpbcr(taucool)
