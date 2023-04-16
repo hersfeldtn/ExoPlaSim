@@ -112,11 +112,13 @@
 !
       integer, parameter :: ORB_UNDEF_INT  = 2000000000  
       real :: obliqr   ! Earth's obliquity in radians
+      real :: meananom0r ! Initial mean anomaly in radians
       real :: lambm0   ! Mean longitude of perihelion at the
                        ! vernal equinox (radians)
       real :: mvelpp   ! Earth's moving vernal equinox longitude
                        ! of perihelion plus pi (radians)
       real :: eccf     ! Earth-sun distance factor ( i.e. (1/r)**2 )
+      real :: orbnu=0. ! Earth true anomaly in radians.
       integer :: iyrad ! Year AD to calculate orbit for
       logical, parameter :: log_print = .true.
                        ! Flag to print-out status information or not.
@@ -1328,7 +1330,11 @@
 !
 !**   2) compute declination [radians]
 !
-      call orb_decl(zcday, eccen, mvelpp, lambm0, obliqr, zdecl, eccf)
+      if (ngenkeplerian == 0) then
+          call orb_decl(zcday, eccen, mvelpp, lambm0, obliqr, zdecl, eccf)
+      else
+          call gen_orb_decl(zcday, eccen, obliqr, mvelpp, orbnu, zdecl, eccf)
+      endif
 !
 !**   3) compute zenith angle
 !
@@ -1351,7 +1357,9 @@
        do jlat = 1 , NLPP
         do jlon = 0 , NLON-1
          jhor = jhor + 1
-         zhangle = zmins * zrtim + jlon * zrlon - PI
+         zhangle = zmins * zrtim + jlon * zrlon - PI - orbnu
+         if (zhangle < -PI) zhangle = zhangle + TWOPI
+         if (zhangle > PI) zhangle = zhangle - TWOPI
          
          if (nfixed==1) zhangle = zhangle + PI
          
@@ -2297,6 +2305,106 @@
       return
       end subroutine lwr
 
+!     **********************
+!     Generic Orbit Routines
+!     **********************
+
+!     =====================
+!     SUBROUTINE GEN_ORB_DECL
+!     =====================
+
+!     Given a mean anomaly, eccentricity, obliquity, and moving longitude of vernal equinox,
+!     compute the declination and true anomaly. This uses a Newton-Raphson iterator and
+!     will work with reasonable accuracy for any bound orbit (eccen<1.0).
+
+      subroutine gen_orb_decl(yearfraction, eccen, obliqr, mvelpp, trueanomaly, zdecl, eccf)
+      use radmod, only : TWOPI, meananom0r, nfixed
+      !Inputs
+      real :: eccen        ! Eccentricity
+      real :: yearfraction ! Elapsed fraction of the year 
+      real :: obliqr       ! Obliquity in radians
+      real :: mvelpp       ! Earth's moving vernal equinox longitude
+!                          ! of perihelion plus pi (radians)
+      !Internal
+      real :: meananomaly
+      real :: eccenanomaly ! Eccentric anomaly
+      real :: lamb         ! True anomaly - longitude of vernal equinox
+      real thyng
+      real anomarg
+      !Outputs
+      real :: trueanomaly  ! True anomaly in radians
+      real :: zdecl        ! Solar declination in radians
+      real :: eccf         ! Eccentricity factor for insolation
+      
+      if (nfixed > 0) then
+          trueanomaly = 0.
+          eccf = 1.
+      else
+          meanomaly = yearfraction*TWOPI + meananom0r
+          if (meananomaly > TWOPI) meananomaly = meananomaly - TWOPI
+          
+          if (eccen > 0.) then
+              call newtonraphson(meananomaly,eccen,eccenanomaly)
+              
+              thyng = tan(eccenanomaly*0.5)
+              anomarg = sqrt((1+eccen)/(1-eccen) * thyng*thyng)
+              
+              if (thyng .lt. 0.) trueanomaly = 2*atan(0.0-anomarg)
+              if (thyng .ge. 0.) trueanomaly = 2*atan(anomarg)
+              
+              if (trueanomaly .lt. 0) trueanomaly = trueanomaly + TWOPI
+              
+              trueanomaly = mod(trueanomaly,TWOPI)
+              
+              eccf = 1 - eccen*cos(eccenanomaly)
+          else  !For a circular orbit we don't need to do all that calculation
+              trueanomaly = meananomaly
+              eccf = 1.
+          endif
+      endif
+      lamb = mvelpp - trueanomaly
+      zdecl  = asin(sin(obliqr)*sin(lamb))
+      
+      return
+      end subroutine gen_orb_decl
+      
+      
+!     ========================
+!     SUBROUTINE NEWTONRAPHSON
+!     ========================
+
+      subroutine newtonraphson(meananom,eccen,ee)
+      use radmod, only: PI
+      
+      real meananom
+      real eccen
+      real ee
+      real e0
+      integer ict
+      logical thresh
+      
+      if (eccen .lt. 0.5) then
+        ee = meananom
+      else
+        ee = PI !prevents crazy excursions due to divide-by-zero
+      endif
+      
+      ict = 0
+      thresh = .false.
+      
+      do while (thresh .neqv. .true.)
+        e0 = ee
+        ee = ee - (ee-(meananom+eccen*sin(ee)))/(1-eccen*cos(ee))
+        if (abs(ee-e0) .le. 1.0e-14) thresh = .true.
+        ict = ict + 1
+        if (ict .gt. 100.0) thresh = .true.
+      enddo 
+      
+      return
+      end subroutine newtonraphson
+      
+      
+      
 !     ====================
 !     Earth Orbit Routines (form CCM3)
 !     ====================
@@ -2350,8 +2458,8 @@
 !     SUBROUTINE ORB_PARAMS
 !     =====================
 
-      subroutine orb_params(iyear_AD, eccen, obliq, mvelp,              &
-     &                      obliqr, lambm0, mvelpp, log_print,          &
+      subroutine orb_params(iyear_AD, eccen, obliq, meananom0, mvelp,   &
+     &                      obliqr, meananom0r, lambm0, mvelpp, log_print,    &
      &                      mypid, nroot,nud)
 !
 !      Calculate earth's orbital parameters using Dave Threshers
@@ -2371,6 +2479,7 @@
 !     ---------------
       real :: eccen        ! Earth's orbital eccentricity
       real :: obliq        ! Earth's obliquity in degree's
+      real :: meananom0    ! Initial mean anomaly
       real :: mvelp        ! Earth's moving vernal equinox longitude
       integer :: iyear_AD  ! Year to calculate orbit for..
       logical :: log_print ! Flag to print-out status information or not.
@@ -2383,6 +2492,7 @@
 !     Output Arguments
 !     ----------------
       real :: obliqr  ! Earth's obliquity in radians
+      real :: meananom0r ! Initial mean anomaly in radians
       real :: lambm0  ! Mean longitude of perihelion at the
 !                     ! vernal equinox (radians)
       real :: mvelpp  ! Earth's moving vernal equinox longitude
@@ -2787,6 +2897,7 @@
 ! Orbit needs the obliquity in radians
 !
       obliqr = obliq*degrad
+      meananom0r = meananom0*degrad
 !
 ! 180 degrees must be added to mvelp since observations are made from the
 ! earth and the sun is considered (wrongly for the algorithm) to go around

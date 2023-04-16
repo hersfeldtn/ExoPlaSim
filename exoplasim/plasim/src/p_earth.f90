@@ -10,10 +10,10 @@ logical :: lex
 ! Preset parameters may be changed using the namelist
 
 namelist /planet_nl/ nfixorb, eccen, mvelp, obliq  &
-                , rotspd, sidereal_day, solar_day  &
-                , sidereal_year, tropical_year     &
+                , meananom0, rotspd, sidereal_day  &
+                , solar_day, sidereal_year, tropical_year &
                 , akap, alr, gascon, ra1, ra2, ra4 &
-                , pnu, ga, plarad &
+                , pnu, ga, plarad, ngenkeplerian &
                 , gsol0 &
                 , yplanet
 
@@ -32,6 +32,7 @@ sidereal_day  =    86164.0916 !      23h 56m 04s
 solar_day     =    86400.0    !      24h 00m 00s
 sidereal_year = 31558149.0    ! 365d 06h 09m 09s
 tropical_year = 31556956.0    ! 365d 05h 49m 16s
+meananom0     = -2.9589       ! Jan 1
 
 ! **********
 ! Atmosphere

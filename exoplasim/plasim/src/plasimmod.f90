@@ -637,6 +637,7 @@
       character(len=80) :: yplanet=" " ! Planet name
 
       integer :: nfixorb = 0           ! Global switch to fix orbit
+      integer :: ngenkeplerian = 0     ! If 1, compute a general Keplerian orbit 
 
       real :: akap   = 0.0             ! Kappa
       real :: alr    = 0.0             ! Lapse rate
@@ -664,6 +665,7 @@
       real :: eccen  = 0.0             ! Eccentricity of Orbit
       real :: obliq  = 0.0             ! Obliquity of Orbit
       real :: mvelp  = 0.0             ! Longitude of moving vernal equinox
+      real :: meananom0 = 0.0          ! Initial mean anomaly in degrees
 
 !     ******************************************
 !     * GUI (Graphical User Interface for X11) *

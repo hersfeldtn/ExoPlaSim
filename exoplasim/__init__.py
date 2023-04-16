@@ -1726,6 +1726,7 @@ class Model(object):
             pHe=None,pN2=None,pO2=None,pCO2=None,pAr=None,pNe=None,
             pKr=None,pH2O=None,gascon=None,pressure=None,pressurebroaden=True,
             vtype=0,rotationperiod=1.0,synchronous=False,substellarlon=180.0,
+            keplerian=False,meananomaly0=None,
             year=None,glaciers={"toggle":False,"mindepth":2.0,"initialh":-1.0},
             restartfile=None,gravity=None,radius=None,eccentricity=None,
             obliquity=None,lonvernaleq=None,fixedorbit=False,orography=None,
@@ -1904,6 +1905,14 @@ class Model(object):
             fixedorbit : bool, optional
               True/False. If True, orbital parameters do not vary over time. If False,
               variations such as Milankovich cycles will be computed by PlaSim.
+            keplerian : bool, optional
+              True/False. If True, a generic Keplerian orbital calculation will be performed.
+              This means no orbital precession, Milankovich cycles, etc, but does allow for
+              accurate calculation of a wide diversity of orbits, including with higher
+              eccentricity. Note that extreme orbits may have extreme results, including
+              extreme crashes.
+            meananomaly0 : float, optional
+              The initial mean anomaly in degrees. Only used if `keplerian=True`.
                 
     **Planet Parameters**
     
@@ -2338,6 +2347,12 @@ References
         self._edit_namelist("planet_namelist","NFIXORB",str(fixedorbit*1))
         self.fixedorbit=fixedorbit
         
+        self._edit_namelist("planet_namelist","NGENKEPLERIAN",str(keplerian*1))
+        self.keplerian=keplerian
+        
+        self._edit_namelist("planet_namelist","MEANANOM0",str(meananomaly0))
+        self.meananomaly0 = meananomaly0
+        
         if type(orography)!=type(None):
             self._edit_namelist("landmod_namelist","OROSCALE",str(orography))
             self._edit_namelist("glacier_namelist","NGLACIER","1")
@@ -2767,6 +2782,16 @@ References
             starradius = float(cfg[82])
         except:
             starradius = 1.0
+            
+        try:
+            keplerian = bool(cfg[83])
+        except:
+            keplerian = False
+            
+        try:
+            meananomaly0 = float(cfg[84])
+        except:
+            meananomaly0 = None
         
         self.configure(noutput=noutput,flux=flux,startemp=startemp,starspec=starspec,starradius=starradius,
                     gascon=gascon,pressure=pressure,pressurebroaden=pressurebroaden,
@@ -2794,7 +2819,8 @@ References
                     runscript=runscript,columnmode=columnmode,highcadence=highcadence,
                     snapshots=snapshots,resources=resources,landmap=landmap,stormclim=stormclim,
                     nstorms=nstorms,stormcapture=stormcapture,topomap=topomap,tlcontrast=tlcontrast,
-                    otherargs=otherargs,glaciers=glaciers,threshold=threshold)       
+                    otherargs=otherargs,glaciers=glaciers,threshold=threshold,keplerian=keplerian,
+                    meananomaly0=meananomaly0)       
     
     def modify(self,**kwargs):
         """Modify any already-configured parameters. All parameters accepted by :py:func:`configure() <exoplasim.Model.configure>` can be passed as arguments.
@@ -2988,6 +3014,12 @@ References
             if key=="desync":
                 self.desync=value 
                 self._edit_namelist("radmod_namelist","DESYNC",str(self.desync))
+            if key=="keplerian":
+                self.keplerian=value
+                self._edit_namelist("planet_namelist","NGENKEPLERIAN",str(self.keplerian*1))
+            if key=="meananomaly0":
+                self.meananomaly0=value
+                self._edit_namelist("planet_namelist","MEANANOMALY0",str(self.meananomaly0))
             if key=="tlcontrast":
                 self.tlcontrast=value
                 self._edit_namelist("plasim_namelist","DTTL",str(self.tlcontrast))
@@ -3652,6 +3684,8 @@ References
         cfg.append(str(self.initsoilcarbon ))
         cfg.append(str(self.initplantcarbon))
         cfg.append(str(self.starradius))
+        cfg.append(str(self.keplerian*1))
+        cfg.append(str(self.meananomaly0))
         
         print("Writing configuration....\n"+"\n".join(cfg))
         print("Writing to %s...."%filename)
