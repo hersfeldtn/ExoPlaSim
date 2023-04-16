@@ -853,7 +853,8 @@
          iyrad = ORB_UNDEF_INT
       endif
       call orb_params(iyrad, eccen, obliq, mvelp                          &
-     &               ,obliqr, lambm0, mvelpp, log_print, mypid, nroot,nud)
+     &               ,obliqr, lambm0, mvelpp, log_print, ngenkeplerian &
+     &               ,mypid, nroot,nud)
 
 !
 !     read climatological ozone
@@ -2460,7 +2461,7 @@
 
       subroutine orb_params(iyear_AD, eccen, obliq, meananom0, mvelp,   &
      &                      obliqr, meananom0r, lambm0, mvelpp, log_print,    &
-     &                      mypid, nroot,nud)
+     &                      ngenkeplerian, mypid, nroot,nud)
 !
 !      Calculate earth's orbital parameters using Dave Threshers
 !      formula which came from Berger, Andre.  1978
@@ -2488,6 +2489,7 @@
       integer :: mypid     ! process id (PUMA MPI)
       integer :: nroot     ! process id of root (PUMA MPI)
       integer :: nud       ! write unit for diagnostic messages
+      integer :: ngenkeplerian
 
 !     Output Arguments
 !     ----------------
@@ -2741,7 +2743,7 @@
           end if
           stop 999
          end if
-         if( (eccen.lt.ORB_ECCEN_MIN).or.(eccen.gt.ORB_ECCEN_MAX) ) then
+         if( ((eccen.lt.ORB_ECCEN_MIN).or.(eccen.gt.ORB_ECCEN_MAX)).and.(ngenkeplerian==0) ) then
           if ( log_print ) then
            if(mypid==nroot) then
             write(nud,*) '(orb_params): Input eccentricity unreasonable: '&
