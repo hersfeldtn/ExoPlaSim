@@ -1740,13 +1740,23 @@
       
         call readdat(aerofile,1,8,aeroqs) ! Get Qextinction, Qscattering, Qbackscatter, g for band 1 & 2
         
+        ssa1 = aeroqs(2)/aeroqs(1) ! Single scattering albedo band 1 (qscat/qext)
+        ssa2 = aeroqs(6)/aeroqs(5) ! Single scattering albedo band 2
+        g1 = aeroqs(4) ! Asymmetry factor band 1
+        g2 = aeroqs(8) ! Asymmetry factor band 2
+        qex1 = aeroqs(1) ! Extinction efficiency band 1
+        qex2 = aeroqs(5) ! Extinction efficiency band 2
+        
         do jlev=NLEV,2,-1 ! Need layer thickness in m for optical depth - copied from radstep
             zdh(:,jlev)=-dt(:,jlev)*gascon/ga*ALOG(sigmah(jlev-1)/sigmah(jlev))
         enddo
         zdh(:,1)=-dt(:,1)*gascon/ga*ALOG(sigma(1)/sigmah(1))*0.5
         
-        zaerot1 = exp(-nrho*PI*(apart**2)*(aeroqs(1)-aeroqs(2))*zdh) ! Band 1 transmission after absorption
-        zaerot2 = exp(-nrho*PI*(apart**2)*(aeroqs(5)-aeroqs(6))*zdh) ! Band 2 transmission after absorption
+        aod1 = nrho*PI*(apart**2)*qex1*zdh ! Aerosol optical depth band 1
+        aod2 = nrho*PI*(apart**2)*qex2*zdh ! Aerosol optical depth band 2
+        
+        
+        
       
       
       endif
