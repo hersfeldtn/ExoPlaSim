@@ -1738,6 +1738,10 @@
 
       if l_aerorad == 1 then
       
+      ! Aerosol two-stream multiscattering radiative transfer parametrization from
+      ! Lacis & Hansen 1974 (see PlaSim manual) based on Sagan & Pollack 1967
+      ! Sagan and Pollack use backscatter ratio whereas Lacis & Hansen use asymmetry factor (g)
+      
         call readdat(aerofile,1,8,aeroqs) ! Get Qextinction, Qscattering, Qbackscatter, g for band 1 & 2
         
         ssa1 = aeroqs(2)/aeroqs(1) ! Single scattering albedo band 1 (qscat/qext)
@@ -1754,6 +1758,21 @@
         
         aod1 = nrho*PI*(apart**2)*qex1*zdh ! Aerosol optical depth band 1
         aod2 = nrho*PI*(apart**2)*qex2*zdh ! Aerosol optical depth band 2
+        do jlev=1,NLEV
+            where(losun(:) .and. (nrho(:,jlev) > 0.))
+                zaeru1 = SQRT((1.0-g1*ssa1)/(1.0-ss1)) ! u-factor band 1
+                zaeru2 = SQRT((1.0-g2*ssa2)/(1.0-ss2)) ! u-factor band 2
+                zaertf1 = SQRT(3.0*(1.0-ssa1)*(1.0-g1*ssa1))*aod1(:,jlev)/zmu0 ! effective t band 1
+                zaertf2 = SQRT(3.0*(1.0-ssa2)*(1.0-g1*ssa2))*aod2(:,jlev)/zmu0 ! effective t band 1
+                zaerd1 = (((zaeru1+1.0)**2.0)*EXP(zaertf1(:,jlev)) - ((zaeru1-1.0)**2.0)*EXP(-zaertf1(:,jlev))) ! denominator band 1
+                zaerd2 = (((zaeru2+1.0)**2.0)*EXP(zaertf2(:,jlev)) - ((zaeru2-1.0)**2.0)*EXP(-zaertf2(:,jlev))) ! denominator band 2
+                zaert1 = (4.0*zaeru1)/zaerd1(:,jlev) ! transmission band 1
+                zaert2 = (4.0*zaeru2)/zaerd2(:,jlev) ! transmission band 2
+                zaerr1 = (zaeru1 + 1.0)*(zaeru1 - 1.0)*(EXP(zaertf1(:,jlev))-EXP(-zaertf1(:,jlev)))/zaerd1(:,jlev) ! reflection band 1
+                zaerr2 = (zaeru2 + 1.0)*(zaeru2 - 1.0)*(EXP(zaertf2(:,jlev))-EXP(-zaertf2(:,jlev)))/zaerd2(:,jlev) ! reflection band 1      
+                
+        
+        
         
         
         
