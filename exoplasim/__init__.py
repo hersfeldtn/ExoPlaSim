@@ -1398,7 +1398,7 @@ class Model(object):
         else:
             self._crash()
     
-    def configure(self,noutput=True,flux=1362,startemp=3042,starspec=None,pH2=None,
+    def configure(self,noutput=True,flux=1367,startemp=3042,starspec=None,pH2=None,
             pHe=None,pN2=None,pO2=None,pCO2=None,pAr=None,pNe=None,
             pKr=None,pH2O=None,pCH4=None,gascon=None,pressure=None,pressurebroaden=True,
             vtype=0,rotationperiod=11.2,synchronous=True,substellarlon=180.0,
@@ -1425,7 +1425,7 @@ class Model(object):
                             "SIZETHRESH":30,"ENDTHRESH":16,"MINSTORMLEN":256,
                             "MAXSTORMLEN":1024,"NKTRIGGER":0,"toggle":0},
             topomap=None,threshold=5.0e-4,otherargs={"NQSPEC@plasim_namelist":'1',"NLOWIO@plasim_namelist":'1'},
-            aerosol=True,aerobulk=1,apart=5e-09,rhop=1000,asource=1,fcoeff=10e-13,aerorad=1):
+            aerosol=True,aerobulk=1,apart=5e-09,rhop=1000,asource=1,fcoeff=10e-13,aerorad=1,aerofile=None):
 
         """Configure the model's namelists and boundary conditions.
         
@@ -1822,6 +1822,12 @@ References
             self._edit_namelist("radmod_namelist","STARFILE","'%s.dat'"%starspec)
             self._edit_namelist("radmod_namelist","STARFILEHR","'%s_hr.dat'"%(starspec))
         self.starspec = starspec
+        if aerofile:
+            if aerofile[-4:]==".dat":
+                aerofile=aerofile[:-4]
+            self_edit_namelist("aero_namelist","l_aerorad","1")
+            self._edit_namelist("aero_namelist","aerofile","'%s.dat'"%aerofile)
+        self.aerofile = aerofile
         
         if pH2:
             self.pgases["pH2"]=pH2
