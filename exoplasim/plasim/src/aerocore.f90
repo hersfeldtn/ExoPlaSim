@@ -258,6 +258,7 @@
 ! Input-Output arrays
 
       real,intent(inout) ::   mmr(im,jm,nl,NAERO) ! Mixing ratio of aerosol
+      real,intent(inout) ::   numrhos(im,jm,nl,NAERO) ! Number density of aerosol in particles/m3 (converted from mass mixing ratio)
       real,intent(inout) :: ps1(im,jm) ! Surface pressure at time t
       real,intent(inout) :: ps2(im,jm)! Surface pressure at time t+dt
       real,intent(inout) ::   u(im,jm,nl) ! Zonal wind at t+dt/2
@@ -296,7 +297,6 @@
       real ::   angle(im,jm) ! Array for cosine of solar zenith angle
       real ::   land(im,jm) ! Array for binary land mask
       real ::   aerosw(im,jm,nl) ! Array for net SW flux
-      real ::   numrhos(im,jm,nl,NAERO) ! Number density of aerosol in particles/m3 (converted from mass mixing ratio)
 
 ! scalars
 
