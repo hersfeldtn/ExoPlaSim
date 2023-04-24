@@ -284,7 +284,7 @@
       real :: delp2dyn(im,jm,nl) ! Layer thickness predicted by dynamical core outside this subroutine
       real :: xmass(im,jm,nl),ymass(im,jm,nl) ! Mass fluxes in x and y direction
       real ::   dg1(im),dg2(im,jm),dpi(im,jm,nl) ! 
-      real ::  qlow(im,jm,nl), daero(im,jm,nl), numrho(im,jm,nl) !
+      real ::  qlow(im,jm,nl), daero(im,jm,nl)!
       real ::    qz(im,jm,nl),qmax(im,jm,nl),qmin(im,jm,nl) !
       real ::    wk(im,jm,nl),pu(im,jm,nl) !
       real ::    fx(im+1,jm,nl),fy(im,jm,nl),fz(im,jm,nl+1),gz(im,jm,nl+1) ! x, y, z density-weighted mmr fluxes + gravitational settling flux
@@ -852,7 +852,7 @@
       mmr(:,:,nl,ic) = mmr(:,:,nl,ic)*10e-3
       where(mmr .lt. 0.) mmr = 0.0
       
-      call mmr2n(mmr(:,:,:,ic),apart,rhop,rhog,im,jm,nl,numrho(:,:,:,ic))
+      call mmr2n(mmr(:,:,:,ic),apart,rhop,rhog,im,jm,nl,numrhos(:,:,:,ic))
 
 5000  continue !tracer loop
 
