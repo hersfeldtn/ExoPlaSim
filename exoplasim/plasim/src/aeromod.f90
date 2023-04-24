@@ -34,6 +34,7 @@
       integer :: l_bulk = 1 ! 1 = N2 atmosphere, 
                             ! 2 = H2 atmosphere
       integer :: l_aerorad = 0 ! 1 = include radiative transfer (radmod); 0 = passive tracers only
+      character(len=80) :: aerofile = " " 
 
       integer,parameter :: aero_cnst = 1   ! 1 = constant preserving
                                            ! 2 = mass conserving
@@ -43,7 +44,15 @@
                                          ! last lat. outside polar cap 
       real :: apart = 50e-9 ! Radius of aerosol particle in meters
       real :: rhop = 1000 ! Density of aerosol particle in kg/m3
-      real :: fcoeff = 10e-13 ! Haze particle mass production rate in kg/m2s
+      real :: fcoeff = 10e-13 ! Haze mass mixing ratio in kg/kg
+      
+      real :: ssa1 = 0. ! Single scattering albedo band 1
+      real :: ssa2 = 0. ! Single scattering albedo band 2
+      real :: g1 = 0. ! Asymmetry parameter band 1
+      real :: g2 = 0. ! Asymmetry parameter band 2
+      real :: qex1 = 0. ! Extinction efficiency band 1
+      real :: qex2 = 0. ! Extinction efficiency band 2
+      real :: aeroqs(8,1) = 0.  ! Array to read in aerosol optical constants
 
       end module aeromod
 
@@ -54,7 +63,7 @@
       subroutine aero_ini
       use aeromod
       
-      namelist/aero_nl/l_source,l_bulk,apart,rhop,fcoeff,l_aerorad
+      namelist/aero_nl/l_source,l_bulk,apart,rhop,fcoeff,l_aerorad,aerofile
 
       if (mypid==NROOT) then
          open(11,file=aero_namelist)
@@ -66,6 +75,25 @@
          write(nud,'(" * Namelist AERO_NL from <aero_namelist> *")')
          write(nud,'(" *********************************************")')
          write(nud,aero_nl)
+     endif
+     
+     if l_aerorad == 1 then
+        call readdat(aerofile,1,8,aeroqs) ! Get Qextinction, Qscattering, Qbackscatter, g for band 1 & 2
+        
+        ssa1 = aeroqs(2)/aeroqs(1) ! Single scattering albedo band 1 (qscat/qext)
+        ssa2 = aeroqs(6)/aeroqs(5) ! Single scattering albedo band 2
+        g1 = aeroqs(4) ! Asymmetry factor band 1
+        g2 = aeroqs(8) ! Asymmetry factor band 2
+        qex1 = aeroqs(1) ! Extinction efficiency band 1
+        qex2 = aeroqs(5) ! Extinction efficiency band 2
+        
+        call mpbci(l_aerorad) ! 1: aerosol radiative transfer enabled
+        call mpbci(ssa1) ! Broadcast optical constants
+        call mpbci(ssa2)
+        call mpbci(g1)
+        call mpbci(g2)
+        call mpbci(qex1)
+        call mpbci(qex2)
      endif
       
       return
