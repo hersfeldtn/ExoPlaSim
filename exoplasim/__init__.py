@@ -24,7 +24,8 @@ smws = {'mH2': 2.01588,
         'mAr': 39.948,
         'mNe': 20.1797,
         'mKr': 83.798,
-        'mH2O':18.01528}
+        'mH2O':18.01528,
+        'mCH4': 16.04246}}
 
 gases_default = {'pH2': 0.0,
                 'pHe': 5.24e-6,
@@ -34,7 +35,8 @@ gases_default = {'pH2': 0.0,
                 'pAr': 9.34e-3,
                 'pNe': 18.18e-6,
                 'pKr': 1.14e-6,
-                'pH2O':0.01}
+                'pH2O':0.01,
+                'pCH4': 0.0}
 
 MARS_GRAV   = 3.728
 MARS_RADIUS = 3400000.0
@@ -1396,9 +1398,9 @@ class Model(object):
         else:
             self._crash()
     
-    def configure(self,noutput=True,flux=837.7,startemp=3042,starspec=None,pH2=None,
-            pHe=None,pN2=0.999622,pO2=None,pCO2=0.000378,pAr=None,pNe=None,
-            pKr=None,pH2O=None,gascon=None,pressure=None,pressurebroaden=True,
+    def configure(self,noutput=True,flux=1362,startemp=3042,starspec=None,pH2=None,
+            pHe=None,pN2=None,pO2=None,pCO2=None,pAr=None,pNe=None,
+            pKr=None,pH2O=None,pCH4=None,gascon=None,pressure=None,pressurebroaden=True,
             vtype=0,rotationperiod=11.2,synchronous=True,substellarlon=180.0,
             year=None,glaciers={"toggle":False,"mindepth":2.0,"initialh":-1.0},
             restartfile=None,gravity=10.9,radius=1.12,eccentricity=0.0,
@@ -1637,6 +1639,8 @@ class Model(object):
                 Ne partial pressure in bars.
             pKr : float, optional  
                 Kr partial pressure in bars.
+            pCH4 : float, optional
+                Methane partial pressure in bars.
             pCO2 : float, optional  
                 CO2 partial pressure in bars. This gets translated into a ppmv concentration, so if you want to specify/vary CO2 but don't need the other gases, specifying pCO2, pressure, and gascon will do the trick. In most use cases, however, just specifying pN2 and pCO2 will give good enough behavior.
             pH2O : float, optional  
@@ -1837,6 +1841,8 @@ References
             self.pgases["pKr"]=pKr
         if pH2O:
             self.pgases["pH2O"]=pH2O
+        if pCH4:
+            self.pgases["pCH4"]=pCH4
         
         if len(self.pgases)==0:
             if not pressure:
@@ -2519,12 +2525,18 @@ References
                     self.pgases["pKr"]=value
                 else:
                     self.pgases["pKr"]=0.0
-            if key=="pH20":
+            if key=="pH2O":
                 setgas=True
                 if type(value)!=type(None):
                     self.pgases["pH2O"]=value
                 else:
                     self.pgases["pH2O"]=0.0
+            if key=="pCH4":
+                setgas=True
+                if type(value)!=type(None):
+                    self.pgases["pCH4"]=value
+                else:
+                    self.pgases["pCH4"]=0.0
             if key=="pressure":
                 pressure=value
                 setpressure=True
