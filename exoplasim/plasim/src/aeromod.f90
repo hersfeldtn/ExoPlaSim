@@ -88,12 +88,12 @@
         qex2 = aeroqs(5) ! Extinction efficiency band 2
         
         call mpbci(l_aerorad) ! 1: aerosol radiative transfer enabled
-        call mpbci(ssa1) ! Broadcast optical constants
-        call mpbci(ssa2)
-        call mpbci(g1)
-        call mpbci(g2)
-        call mpbci(qex1)
-        call mpbci(qex2)
+        call mpbcr(ssa1) ! Broadcast optical constants
+        call mpbcr(ssa2)
+        call mpbcr(g1)
+        call mpbcr(g2)
+        call mpbcr(qex1)
+        call mpbcr(qex2)
      endif
       
       return
@@ -142,7 +142,7 @@
             call mpgagp(angle,gmu0,1) ! Gather from nodes
         endif
         if l_aerorad == 1 then
-            call mpgagp(aerosw, dwfl,1) ! Gather SW flux from nodes
+            call mpgagp(aerosw, dswfl,1) ! Gather SW flux from nodes
         endif
       case(2) ! Case 2: dust
        call mpgagp(land,dls,1) ! Import land-sea mask from landmod and reshape to match grid size
