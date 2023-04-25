@@ -26,8 +26,10 @@
       real    :: starbbtemp = 5772.0 ! Star's blackbody surface temperature (K)
       logical :: lstarfile = .false.
       integer :: nstarfile = 0      ! integer version of the logical
+      logical :: l_aerorad = 0 ! Aerosol scattering and absoprtion off (0) or on (1)
       character(len=80) :: starfile = " " !Name of input stellar spectrum file
       character(len=80) :: starfilehr = " " !Name of hi-res version of input spectrum
+      character(len=80) :: aerofile = " " ! Name/path to file constaining aerosol optical data
       
       real    :: gsol0   = 1367.0 ! solar constant (set in planet module)
       real    :: solclat = 1.0    ! cos of lat of insolation if ncstsol=1
@@ -80,6 +82,14 @@
       real :: rcl1(3)=(/0.15,0.30,0.60/) ! cloud albedos spectral range 1
       real :: rcl2(3)=(/0.15,0.30,0.60/) ! cloud albedos spectral range 2
       real :: acl2(3)=(/0.05,0.10,0.20/) ! cloud absorptivities spectral range 2
+      
+      real :: ssa1 = 0. ! Single scattering albedo band 1
+      real :: ssa2 = 0. ! Single scattering albedo band 2
+      real :: g1 = 0. ! Asymmetry parameter band 1
+      real :: g2 = 0. ! Asymmetry parameter band 2
+      real :: qex1 = 0. ! Extinction efficiency band 1
+      real :: qex2 = 0. ! Extinction efficiency band 2
+      real :: aeroqs(8,1) = 0.  ! Array to read in aerosol optical constants
 !
 !*    2.3) arrays
 !
@@ -594,6 +604,7 @@
      &               ,nsol,nclouds,nswrcl,nrscat,rcl1,rcl2,acl2,clgray,tpofmt   &
      &               ,acllwr,tswr1,tswr2,tswr3,th2oc,dawn,starbbtemp,nstartemp  &
      &               ,nsimplealbedo,nstarfile,starfile,starfilehr,minwavel
+     namelist/aero_nl/l_aerorad,aerofile
 !
 !     namelist parameter:
 !
@@ -621,6 +632,10 @@
 !     tswr3   ! tuning of cloud s. scattering alb. range2
 !     th2oc   ! absorption coefficient for h2o continuum
 !     dawn    : zenith angle threshhold for night
+!
+!     aerosol namelist parameters:
+!     l_aerorad  : turns aerosol scattering/absorption effects on/off
+!     aerofile   : dat file containing optical constants for aerosols
 !
 !     following parameters are read from the planet module
 !
@@ -770,6 +785,8 @@
       call mpbci(nsimplealbedo)
       call mpbci(nstarfile)
       call mpbcr(minwavel)
+      
+      call mpbci(l_aerorad)
 
 !      
 !     determine stellar parameters      
@@ -866,6 +883,24 @@
 !
       if(co2 > 0.) then
        dqco2(:,:)=co2
+      endif
+      
+      if (l_aerorad == 0) then
+        call readdat(aerofile,1,8,aeroqs) ! Get Qextinction, Qscattering, Qbackscatter, g for band 1 & 2
+        
+        ssa1 = aeroqs(2)/aeroqs(1) ! Single scattering albedo band 1 (qscat/qext)
+        ssa2 = aeroqs(6)/aeroqs(5) ! Single scattering albedo band 2
+        g1 = aeroqs(4) ! Asymmetry factor band 1
+        g2 = aeroqs(8) ! Asymmetry factor band 2
+        qex1 = aeroqs(1) ! Extinction efficiency band 1
+        qex2 = aeroqs(5) ! Extinction efficiency band 2
+        
+        call mpbcr(ssa1) ! Broadcast optical constants
+        call mpbcr(ssa2)
+        call mpbcr(g1)
+        call mpbcr(g2)
+        call mpbcr(qex1)
+        call mpbcr(qex2)
       endif
 !
       return
@@ -1470,7 +1505,6 @@
 
       subroutine swr
       use radmod
-      use aeromod, only: l_aerorad, apart, rhop
 !
 !     calculate short wave radiation fluxes
 !
