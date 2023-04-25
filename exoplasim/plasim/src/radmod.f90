@@ -1891,10 +1891,11 @@
 !     clear part: rayleigh scattering (only lowermost level)
 !     cloudy part: cloud albedo
 !     aerosols: reflected direct light (zaerr1) and reflected scattered light (zaerr1s)
+!     in clear sky portion only (i.e. (1-dcc))
 !
-        zrb1(:,jlev)=zrcs(:,jlev)+zrcl1(:,jlev)*dcc(:,jlev)*nclouds
+        zrb1(:,jlev)=zrcs(:,jlev)+zrcl1(:,jlev)*dcc(:,jlev)*nclouds+zaerr1(:,jlev)*(1.-dcc(:,jlev))*l_aerorad
         !zrb1(:,jlev) = zta1*zrcs(:,jlev)+(1-zta1)*zrcsu(:,jlev)+zrcl1(:,jlev)*dcc(:,jlev)
-        zrb1s(:,jlev)=zrcsu(:,jlev)+zrcl1s(:,jlev)*dcc(:,jlev)*nclouds
+        zrb1s(:,jlev)=zrcsu(:,jlev)+zrcl1s(:,jlev)*dcc(:,jlev)*nclouds+zaerr1s(:,jlev)*(1.-dcc(:,jlev))*l_aerorad
 !
 !     b) T
 !
@@ -1938,9 +1939,10 @@
 !     a) R
 !
 !     cloud albedo
+!     aerosol scattering from clear sky part
 !
-        zrb2(:,jlev)=zrcl2(:,jlev)*dcc(:,jlev)*nclouds
-        zrb2s(:,jlev)=zrcl2s(:,jlev)*dcc(:,jlev)*nclouds
+        zrb2(:,jlev)=zrcl2(:,jlev)*dcc(:,jlev)*nclouds+zaerr2(:,jlev)*(1.-dcc(:,jlev))*l_aerorad
+        zrb2s(:,jlev)=zrcl2s(:,jlev)*dcc(:,jlev)*nclouds+zaerr2s(:,jlev)*(1.-dcc(:,jlev))*l_aerorad
 !
 !     b) T
 !
@@ -1965,9 +1967,11 @@
 !     total T = 1-A(water vapor)*(1.-dcc)-(A(cloud)+R(cloud))*dcc
 !
         ztb2(:,jlev)=1.-(1.-ztwv(:))*(1.-dcc(:,jlev)*nclouds)                   &
-     &              -(1.-ztcl2(:,jlev))*dcc(:,jlev)*nclouds                     
+     &              -(1.-ztcl2(:,jlev))*dcc(:,jlev)*nclouds                     &
+                    -(1.-zaert2(:,jlev)*(1.-dcc(:,jlev))*l_aerorad
         ztb2u(:,jlev)=1.-(1.-ztwvu(:))*(1.-dcc(:,jlev)*nclouds)                 &
-     &               -(1.-ztcl2s(:,jlev))*dcc(:,jlev)*nclouds                   
+     &               -(1.-ztcl2s(:,jlev))*dcc(:,jlev)*nclouds                   &
+                     -(1.-zaert2s(:,jlev))*(1.-dcc(:,jlev))*l_aerorad
 !
 !     make combined layer R_ab, R_abs, T_ab and T_abs
 !
