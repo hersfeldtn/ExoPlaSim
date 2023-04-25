@@ -1968,7 +1968,7 @@
 !
         ztb2(:,jlev)=1.-(1.-ztwv(:))*(1.-dcc(:,jlev)*nclouds)                   &
      &              -(1.-ztcl2(:,jlev))*dcc(:,jlev)*nclouds                     &
-                    -(1.-zaert2(:,jlev)*(1.-dcc(:,jlev))*l_aerorad
+                    -(1.-zaert2(:,jlev))*(1.-dcc(:,jlev))*l_aerorad
         ztb2u(:,jlev)=1.-(1.-ztwvu(:))*(1.-dcc(:,jlev)*nclouds)                 &
      &               -(1.-ztcl2s(:,jlev))*dcc(:,jlev)*nclouds                   &
                      -(1.-zaert2s(:,jlev))*(1.-dcc(:,jlev))*l_aerorad
