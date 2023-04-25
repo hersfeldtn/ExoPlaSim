@@ -617,17 +617,23 @@
 !MIC$* shared(CRX,CRY,PU,xmass,ymass,fx,fy,acosp,rcap,qz)
 !MIC$* private(i,j,k,jt,wk,DG2)
 
-      select case (l_source) ! Choose your aerosol source
-      case(1) ! Case 1: photochemical haze
-        if l_aerorad == 0 then
-            mmr(:,:,1,ic) = fcoeff*angle ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
-        endif
-        if l_aerorad == 1 then
-            mmr(:,:,:,ic) = fcoeff*aerosw/max(aerosw) ! At the max SW flux, the source strength is the input source
-        endif
-      case(2) ! Case 2: dust
-        mmr(:,:,NLEV,ic) = fcoeff*land ! At k=surface, land grid boxes are given the abundance fcoeff (kg/kg) and sea is given 0
-      end select
+      if (l_aerorad == 0) then
+       select case (l_source) ! Choose your aerosol source
+       case(1) ! Case 1: photochemical haze
+         mmr(:,:,1,ic) = fcoeff*angle ! The coefficient fcoeff sets the haze mass production rate at the solar zenith at k=1
+       case(2)
+         mmr(:,:,NLEV,ic) = fcoeff*land ! At k=surface, land grid boxes are given the abundance fcoeff (kg/kg) and sea is given 0
+       end select
+      end if
+      
+      if (l_aerorad == 1) then
+       select case (l_source) ! Choose your aerosol source
+       case(1) ! Case 1: photochemical haze
+         mmr(:,:,:,ic) = fcoeff*(aerosw/maxval(aerosw)) ! At the max SW flux, the source strength is the input source
+       case(2) ! Case 2: dust
+         mmr(:,:,NLEV,ic) = fcoeff*land ! At k=surface, land grid boxes are given the abundance fcoeff (kg/kg) and sea is given 0
+       end select
+      end if
       
       do 2500 k=1,nl ! Vertical levels loop
 

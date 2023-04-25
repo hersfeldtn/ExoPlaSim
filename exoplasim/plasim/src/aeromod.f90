@@ -82,7 +82,7 @@
                          mypid,NROOT,sigmah,dt,dls,dswfl
       use tracermod
       use aeromod
-      use radmod, only: gmu0 ! Use cosine of solar zenith angle from radmod; used to define haze production profile at top level
+      use radmod, only: gmu0, l_aerorad ! Use cosine of solar zenith angle from radmod;
 
       implicit none
 
@@ -106,18 +106,24 @@
       call prepare_uvps( zu,zv,zps0,zps1,      & ! output
                          du0,dv0,dp0,du,dv,dp)   ! input
 
-      select case (l_source) ! Choose your aerosol source
-      case(1) ! Case 1: photochemical haze
-        if l_aerorad == 0 then
-            call solang ! Use subroutine from radmod to calculate solar zenith angle
-            call mpgagp(angle,gmu0,1) ! Gather from nodes
-        endif
-        if l_aerorad == 1 then
-            call mpgagp(aerosw, dswfl,1) ! Gather SW flux from nodes
-        endif
-      case(2) ! Case 2: dust
-       call mpgagp(land,dls,1) ! Import land-sea mask from landmod and reshape to match grid size
-      end select ! 
+      if (l_aerorad == 0) then ! No radiative transfer
+       select case (l_source) ! Choose your aerosol source
+       case(1) ! Case 1: photochemical haze
+         call solang ! Use subroutine from radmod to calculate solar zenith angle
+         call mpgagp(angle,gmu0,1) ! Gather from nodes
+       case(2) ! Case 2: dust
+         call mpgagp(land,dls,1) ! Import land-sea mask from landmod and reshape to match grid size
+       end select
+      end if
+      
+      if (l_aerorad == 1) then ! Include radiative transfer
+       select case (l_source) ! Choose aerosol source
+       case(1) ! Case 1: photochemical haze     
+        call mpgagp(aerosw,dswfl,NLEV) ! Gather SW flux from nodes
+       case(2) ! Case 2: dust
+        call mpgagp(land,dls,1) ! Import land-sea mask from landmod and reshape to match grid size
+       end select
+      end if 
 
       if (mypid == NROOT .and. aero_debug) then
          write(nud,'(a,f11.2)') '* max aero u   =',maxval(abs(zu))

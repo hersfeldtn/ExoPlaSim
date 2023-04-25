@@ -26,7 +26,7 @@
       real    :: starbbtemp = 5772.0 ! Star's blackbody surface temperature (K)
       logical :: lstarfile = .false.
       integer :: nstarfile = 0      ! integer version of the logical
-      logical :: l_aerorad = 0 ! Aerosol scattering and absoprtion off (0) or on (1)
+      integer :: l_aerorad = 0 ! Aerosol scattering and absorption off (0) or on (1)
       character(len=80) :: starfile = " " !Name of input stellar spectrum file
       character(len=80) :: starfilehr = " " !Name of hi-res version of input spectrum
       character(len=80) :: aerofile = " " ! Name/path to file constaining aerosol optical data
@@ -89,7 +89,7 @@
       real :: g2 = 0. ! Asymmetry parameter band 2
       real :: qex1 = 0. ! Extinction efficiency band 1
       real :: qex2 = 0. ! Extinction efficiency band 2
-      real :: aeroqs(8,1) = 0.  ! Array to read in aerosol optical constants
+      real :: aeroqs(8) = 0.  ! Array to read in aerosol optical constants
 !
 !*    2.3) arrays
 !
@@ -1595,7 +1595,7 @@
       real zrcl1s(NHOR,NLEV),zrcl2s(NHOR,NLEV)! cloud reflexivities (scattered)
       real ztcl2(NHOR,NLEV),ztcl2s(NHOR,NLEV) ! cloud transmissivities
       
-      real zdh(NHOR,NLEV)                     ! thickness of an atmospheric layer (m)
+      real zaerdh(NHOR,NLEV)                     ! thickness of an atmospheric layer (m)
       real zaert1(NHOR,NLEV),zaert2(NHOR,NLEV) ! aerosol transmissivities (direct)
       real zaerr1(NHOR,NLEV),zaerr2(NHOR,NLEV) ! aerosol reflectivities (direct)
       real zaert1s(NHOR,NLEV),zaert2s(NHOR,NLEV) ! aerosol transmissivities (scattered)
@@ -1608,7 +1608,6 @@
       real :: zaertf1s(NHOR,NLEV),zaertf2s(NHOR,NLEV) ! (scattered light)
       real :: zaerd1(NHOR,NLEV),zaerd2(NHOR,NLEV) ! Denominator (direct light)
       real :: zaerd1s(NHOR,NLEV),zaerd2s(NHOR,NLEV) ! (scattered light)
-      real :: aod1(NHOR,NLEV),aod2(NHOR,NLEV) ! Aerosol optical depth
       real :: aod1(NHOR,NLEV),aod2(NHOR,NLEV) ! Aerosol optical depth
 !
 !     arrays for diagnostic cloud properties
@@ -1791,48 +1790,46 @@
       zaerr1s(:,:) = 0.0
       zaerr2s(:,:) = 0.0
 
-      if l_aero > 0 and l_aerorad == 1 then
+      if (l_aero > 0 .and. l_aerorad == 1) then
       
       ! Aerosol two-stream multiscattering radiative transfer parametrization from
       ! Lacis & Hansen 1974 (see PlaSim manual) based on Sagan & Pollack 1967
       ! Sagan and Pollack use backscatter ratio whereas Lacis & Hansen use asymmetry factor (g)
         
-        do jlev=NLEV,2,-1 ! Need layer thickness in m for optical depth - copied from radstep
-         zdh(:,jlev)=-dt(:,jlev)*gascon/ga*ALOG(sigmah(jlev-1)/sigmah(jlev))
-        enddo
-        zdh(:,1)=-dt(:,1)*gascon/ga*ALOG(sigma(1)/sigmah(1))*0.5
+       do jlev=NLEV,2,-1 ! Need layer thickness in m for optical depth - copied from radstep
+        zaerdh(:,jlev)=-dt(:,jlev)*gascon/ga*ALOG(sigmah(jlev-1)/sigmah(jlev))
+       enddo
+       zaerdh(:,1)=-dt(:,1)*gascon/ga*ALOG(sigma(1)/sigmah(1))*0.5
         
-        aod1 = nrho*PI*(apart**2)*qex1*zdh ! Aerosol optical depth band 1
-        aod2 = nrho*PI*(apart**2)*qex2*zdh ! Aerosol optical depth band 2
+       aod1 = nrho(:,:NLEV)*PI*(apart**2)*qex1*zaerdh ! Aerosol optical depth band 1
+       aod2 = nrho(:,:NLEV)*PI*(apart**2)*qex2*zaerdh ! Aerosol optical depth band 2
         
-        zaeru1 = SQRT((1.0-g1*ssa1)/(1.0-ssa1)) ! u-factor band 1
-        zaeru2 = SQRT((1.0-g2*ssa2)/(1.0-ssa2)) ! u-factor band 2
-        ztemp1 = SQRT(3.0*(1.0-ssa1)*(1.0-g1*ssa1))
-        ztemp2 = SQRT(3.0*(1.0-ssa2)*(1.0-g1*ssa2))
-        do jlev=1,NLEV
-         where(losun(:) .and. (nrho(:,jlev) > 0.)) ! direct light first
-          zaertf1(:,jlev) = (ztemp1*aod1(:,jlev))/zmu0  ! effective t band 1
-          zaertf2(:,jlev) = (ztemp2*aod2(:,jlev))/zmu0 ! effective t band 2
-          zaerd1(:,jlev) = (((zaeru1+1.0)**2.0)*EXP(zaertf1(:,jlev)) - ((zaeru1-1.0)**2.0)*EXP(-zaertf1(:,jlev))) ! denominator band 1
-          zaerd2(:,jlev) = (((zaeru2+1.0)**2.0)*EXP(zaertf2(:,jlev)) - ((zaeru2-1.0)**2.0)*EXP(-zaertf2(:,jlev))) ! denominator band 2
-          zaert1(:,jlev) = (4.0*zaeru1)/zaerd1(:,jlev) ! transmission band 1
-          zaert2(:,jlev) = (4.0*zaeru2)/zaerd2(:,jlev) ! transmission band 2
-          zaerr1(:,jlev) = (zaeru1 + 1.0)*(zaeru1 - 1.0)*(EXP(zaertf1(:,jlev))-EXP(-zaertf1(:,jlev)))/zaerd1(:,jlev) ! reflection band 1
-          zaerr2(:,jlev) = (zaeru2 + 1.0)*(zaeru2 - 1.0)*(EXP(zaertf2(:,jlev))-EXP(-zaertf2(:,jlev)))/zaerd2(:,jlev) ! reflection band 1      
+       zaeru1 = SQRT((1.0-g1*ssa1)/(1.0-ssa1)) ! u-factor band 1
+       zaeru2 = SQRT((1.0-g2*ssa2)/(1.0-ssa2)) ! u-factor band 2
+       ztemp1 = SQRT(3.0*(1.0-ssa1)*(1.0-g1*ssa1))
+       ztemp2 = SQRT(3.0*(1.0-ssa2)*(1.0-g1*ssa2))
+       do jlev=1,NLEV
+        where(losun(:) .and. (nrho(:,jlev) > 0.)) ! direct light first
+         zaertf1(:,jlev) = (ztemp1*aod1(:,jlev))/zmu0  ! effective t band 1
+         zaertf2(:,jlev) = (ztemp2*aod2(:,jlev))/zmu0 ! effective t band 2
+         zaerd1(:,jlev) = (((zaeru1+1.0)**2.0)*EXP(zaertf1(:,jlev)) - ((zaeru1-1.0)**2.0)*EXP(-zaertf1(:,jlev))) ! denominator band 1
+         zaerd2(:,jlev) = (((zaeru2+1.0)**2.0)*EXP(zaertf2(:,jlev)) - ((zaeru2-1.0)**2.0)*EXP(-zaertf2(:,jlev))) ! denominator band 2
+         zaert1(:,jlev) = (4.0*zaeru1)/zaerd1(:,jlev) ! transmission band 1
+         zaert2(:,jlev) = (4.0*zaeru2)/zaerd2(:,jlev) ! transmission band 2
+         zaerr1(:,jlev) = (zaeru1 + 1.0)*(zaeru1 - 1.0)*(EXP(zaertf1(:,jlev))-EXP(-zaertf1(:,jlev)))/zaerd1(:,jlev) ! reflection band 1
+         zaerr2(:,jlev) = (zaeru2 + 1.0)*(zaeru2 - 1.0)*(EXP(zaertf2(:,jlev))-EXP(-zaertf2(:,jlev)))/zaerd2(:,jlev) ! reflection band 1      
 
-          ! Next do scattered light
-          zaertf1s(:,jlev) = (ztemp1*aod1(:,jlev))/zmu00  ! effective t band 1 using zmu00 not zmu0!
-          zaertf2s(:,jlev) = (ztemp2*aod2(:,jlev))/zmu00 ! effective t band 2
-          zaerd1s(:,jlev) = (((zaeru1+1.0)**2.0)*EXP(zaertf1(:,jlev)) - ((zaeru1-1.0)**2.0)*EXP(-zaertf1(:,jlev))) ! denominator band 1
-          zaerd2s(:,jlev) = (((zaeru2+1.0)**2.0)*EXP(zaertf2(:,jlev)) - ((zaeru2-1.0)**2.0)*EXP(-zaertf2(:,jlev))) ! denominator band 2
-          zaert1s(:,jlev) = (4.0*zaeru1)/zaerd1(:,jlev) ! transmission band 1
-          zaert2s(:,jlev) = (4.0*zaeru2)/zaerd2(:,jlev) ! transmission band 2
-          zaerr1s(:,jlev) = (zaeru1 + 1.0)*(zaeru1 - 1.0)*(EXP(zaertf1(:,jlev))-EXP(-zaertf1(:,jlev)))/zaerd1(:,jlev) ! reflection band 1
-          zaerr2s(:,jlev) = (zaeru2 + 1.0)*(zaeru2 - 1.0)*(EXP(zaertf2(:,jlev))-EXP(-zaertf2(:,jlev)))/zaerd2(:,jlev) ! reflection band 1      
-          endwhere
-        enddo ! levels loop
-
-
+         ! Next do scattered light
+         zaertf1s(:,jlev) = (ztemp1*aod1(:,jlev))/zmu00  ! effective t band 1 using zmu00 not zmu0!
+         zaertf2s(:,jlev) = (ztemp2*aod2(:,jlev))/zmu00 ! effective t band 2
+         zaerd1s(:,jlev) = (((zaeru1+1.0)**2.0)*EXP(zaertf1(:,jlev)) - ((zaeru1-1.0)**2.0)*EXP(-zaertf1(:,jlev))) ! denominator band 1
+         zaerd2s(:,jlev) = (((zaeru2+1.0)**2.0)*EXP(zaertf2(:,jlev)) - ((zaeru2-1.0)**2.0)*EXP(-zaertf2(:,jlev))) ! denominator band 2
+         zaert1s(:,jlev) = (4.0*zaeru1)/zaerd1(:,jlev) ! transmission band 1
+         zaert2s(:,jlev) = (4.0*zaeru2)/zaerd2(:,jlev) ! transmission band 2
+         zaerr1s(:,jlev) = (zaeru1 + 1.0)*(zaeru1 - 1.0)*(EXP(zaertf1(:,jlev))-EXP(-zaertf1(:,jlev)))/zaerd1(:,jlev) ! reflection band 1
+         zaerr2s(:,jlev) = (zaeru2 + 1.0)*(zaeru2 - 1.0)*(EXP(zaertf2(:,jlev))-EXP(-zaertf2(:,jlev)))/zaerd2(:,jlev) ! reflection band 1      
+        endwhere
+       enddo ! levels loop
       endif
 !
 !     compute optical properties
@@ -1895,9 +1892,9 @@
 !     cloudy part: cloud albedo
 !     aerosols: reflected direct light (zaerr1) and reflected scattered light (zaerr1s)
 !
-        zrb1(:,jlev)=zrcs(:,jlev)+zrcl1(:,jlev)*dcc(:,jlev)*nclouds+zaerr1(:,jlev)*l_aerorad
+        zrb1(:,jlev)=zrcs(:,jlev)+zrcl1(:,jlev)*dcc(:,jlev)*nclouds
         !zrb1(:,jlev) = zta1*zrcs(:,jlev)+(1-zta1)*zrcsu(:,jlev)+zrcl1(:,jlev)*dcc(:,jlev)
-        zrb1s(:,jlev)=zrcsu(:,jlev)+zrcl1s(:,jlev)*dcc(:,jlev)*nclouds+zaerr1s(:,jlev)*l_aerorad
+        zrb1s(:,jlev)=zrcsu(:,jlev)+zrcl1s(:,jlev)*dcc(:,jlev)*nclouds
 !
 !     b) T
 !
@@ -1924,10 +1921,8 @@
 !
 !     total T = 1-(A(ozon)+R(rayl.))*(1-dcc)-R(cloud)*dcc
 !
-        ztb1(:,jlev)=1.-(1.-zto3(:))*(1.-dcc(:,jlev))-zrb1(:,jlev)   &
-                      -(1.-zaert1(:,jlev))*l_aerorad
-        ztb1u(:,jlev)=1.-(1.-zto3u(:))*(1.-dcc(:,jlev))-zrb1s(:,jlev) &
-                      -(1.-zaert1s(:,jlev))*l_aerorad
+        ztb1(:,jlev)=1.-(1.-zto3(:))*(1.-dcc(:,jlev))-zrb1(:,jlev)   
+        ztb1u(:,jlev)=1.-(1.-zto3u(:))*(1.-dcc(:,jlev))-zrb1s(:,jlev) 
 !
 !     make combined layer R_ab, R_abs, T_ab and T_abs
 !
@@ -1944,8 +1939,8 @@
 !
 !     cloud albedo
 !
-        zrb2(:,jlev)=zrcl2(:,jlev)*dcc(:,jlev)*nclouds+zaerr2(:,jlev)*l_aerorad
-        zrb2s(:,jlev)=zrcl2s(:,jlev)*dcc(:,jlev)*nclouds+zaerr2s(:,jlev)*l_aerorad
+        zrb2(:,jlev)=zrcl2(:,jlev)*dcc(:,jlev)*nclouds
+        zrb2s(:,jlev)=zrcl2s(:,jlev)*dcc(:,jlev)*nclouds
 !
 !     b) T
 !
@@ -1970,11 +1965,9 @@
 !     total T = 1-A(water vapor)*(1.-dcc)-(A(cloud)+R(cloud))*dcc
 !
         ztb2(:,jlev)=1.-(1.-ztwv(:))*(1.-dcc(:,jlev)*nclouds)                   &
-     &              -(1.-ztcl2(:,jlev))*dcc(:,jlev)*nclouds
-                    -(1.-zaert2(:,jlev))*l_aerorad
+     &              -(1.-ztcl2(:,jlev))*dcc(:,jlev)*nclouds                     
         ztb2u(:,jlev)=1.-(1.-ztwvu(:))*(1.-dcc(:,jlev)*nclouds)                 &
-     &               -(1.-ztcl2s(:,jlev))*dcc(:,jlev)*nclouds
-                     -(1.-zaert2s(:,jlev))*l_aerorad
+     &               -(1.-ztcl2s(:,jlev))*dcc(:,jlev)*nclouds                   
 !
 !     make combined layer R_ab, R_abs, T_ab and T_abs
 !
