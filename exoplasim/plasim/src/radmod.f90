@@ -885,7 +885,7 @@
        dqco2(:,:)=co2
       endif
       
-      if (l_aerorad == 0) then
+      if (l_aero > 0 .and. l_aerorad == 1) then
         call readdat(aerofile,1,8,aeroqs) ! Get Qextinction, Qscattering, Qbackscatter, g for band 1 & 2
         
         ssa1 = aeroqs(2)/aeroqs(1) ! Single scattering albedo band 1 (qscat/qext)
