@@ -890,12 +890,12 @@
        if (mypid == NROOT) then
         call readdat(aerofile,1,8,aeroqs) ! Get Qextinction, Qscattering, Qbackscatter, g for band 1 & 2
         
-        ssa1 = aeroqs(2)/aeroqs(1) ! Single scattering albedo band 1 (qscat/qext)
-        ssa2 = aeroqs(6)/aeroqs(5) ! Single scattering albedo band 2
-        g1 = aeroqs(4) ! Asymmetry factor band 1
-        g2 = aeroqs(8) ! Asymmetry factor band 2
-        qex1 = aeroqs(1) ! Extinction efficiency band 1
-        qex2 = aeroqs(5) ! Extinction efficiency band 2
+        ssa1 = aeroqs(2,1)/aeroqs(1,1) ! Single scattering albedo band 1 (qscat/qext)
+        ssa2 = aeroqs(6,1)/aeroqs(5,1) ! Single scattering albedo band 2
+        g1 = aeroqs(4,1) ! Asymmetry factor band 1
+        g2 = aeroqs(8,1) ! Asymmetry factor band 2
+        qex1 = aeroqs(1,1) ! Extinction efficiency band 1
+        qex2 = aeroqs(5,1) ! Extinction efficiency band 2
        endif
         
         call mpbcr(ssa1) ! Broadcast optical constants
@@ -1808,8 +1808,8 @@
        zaerdh(:,1)=-dt(:,1)*gascon/ga*ALOG(sigma(1)/sigmah(1))*0.5
        
        do jlev=1,NLEV
-        aod1 = nrho(:,jlev)*PI*(apart**2)*qex1*zaerdh(:,jlev) ! Aerosol optical depth band 1
-        aod2 = nrho(:,jlev)*PI*(apart**2)*qex2*zaerdh(:,jlev) ! Aerosol optical depth band 2
+        aod1(:,jlev) = nrho(:,jlev)*PI*(apart**2)*qex1*zaerdh(:,jlev) ! Aerosol optical depth band 1
+        aod2(:,jlev) = nrho(:,jlev)*PI*(apart**2)*qex2*zaerdh(:,jlev) ! Aerosol optical depth band 2
        enddo
         
        zaeru1 = SQRT((1.0-g1*ssa1)/(1.0-ssa1)) ! u-factor band 1
