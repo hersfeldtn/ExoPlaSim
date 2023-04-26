@@ -41,7 +41,7 @@ model = exo.Model(workdir = planet +'_' + str(density) + '_' + str(radius),
                   modelname = planet +'_' + str(density) + '_' + str(radius),
                   resolution='T21',
                   layers=10,
-                  ncpus=32,
+                  ncpus=16,
                   precision=8,
                   outputtype='.npz')
 
