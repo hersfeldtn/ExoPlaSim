@@ -52,8 +52,9 @@
 
       subroutine aero_ini
       use aeromod
+      use radmod, only: l_aerorad, aerofile
       
-      namelist/aero_nl/l_source,l_bulk,apart,rhop,fcoeff
+      namelist/aero_nl/l_source,l_bulk,apart,rhop,fcoeff,l_aerorad,aerofile
 
       if (mypid==NROOT) then
          open(11,file=aero_namelist)

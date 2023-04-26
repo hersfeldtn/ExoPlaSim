@@ -5,5 +5,6 @@
  rhop    =     1000
  fcoeff  =     10E-13
  l_aerorad = 1
+ aerofile = 0
  /END
  

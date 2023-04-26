@@ -25,7 +25,7 @@ smws = {'mH2': 2.01588,
         'mNe': 20.1797,
         'mKr': 83.798,
         'mH2O':18.01528,
-        'mCH4': 16.04246}}
+        'mCH4': 16.04246}
 
 gases_default = {'pH2': 0.0,
                 'pHe': 5.24e-6,
@@ -1825,7 +1825,7 @@ References
         if aerofile:
             if aerofile[-4:]==".dat":
                 aerofile=aerofile[:-4]
-            self_edit_namelist("aero_namelist","l_aerorad","1")
+            self._edit_namelist("aero_namelist","l_aerorad","1")
             self._edit_namelist("aero_namelist","aerofile","'%s.dat'"%aerofile)
         self.aerofile = aerofile
         

@@ -604,7 +604,7 @@
      &               ,nsol,nclouds,nswrcl,nrscat,rcl1,rcl2,acl2,clgray,tpofmt   &
      &               ,acllwr,tswr1,tswr2,tswr3,th2oc,dawn,starbbtemp,nstartemp  &
      &               ,nsimplealbedo,nstarfile,starfile,starfilehr,minwavel
-     namelist/aero_nl/l_aerorad,aerofile
+     namelist/aero_nl/l_source,l_bulk,apart,rhop,fcoeff,l_aerorad,aerofile
 !
 !     namelist parameter:
 !
