@@ -23,7 +23,7 @@ wolfdict = {'radius' : 1.66, 'solcon' : 1777, 'startemp' : 3408, 'N2' : 0.988,
 current_dir = os.getcwd()
 print('Current directory is ' + str(current_dir))
 if current_dir != top_dir:
-os.chdir(top_dir)
+    os.chdir(top_dir)
 new_dir = os.getcwd()
 
 print('Current directory is ' + str(new_dir))
@@ -32,9 +32,9 @@ print('Particle density: ' + str(density))
 print('Particle radius: ' + str(radius))
 
 if planet == wolfdict['name']:
-config = wolfdict
+    config = wolfdict
 else:
-print('No config dictionary available for ' + str(planet))
+    print('No config dictionary available for ' + str(planet))
 
 
 model = exo.Model(workdir = planet +'_' + str(density) + '_' + str(radius),
@@ -54,7 +54,8 @@ model.configure(flux = config['solcon'], startemp = config['startemp'],
                radius = config['radius'], eccentricity = config['eccentricity'], 
                obliquity = 0.0, aquaplanet = True, stratosphere = True,
                timestep = 15.0, snapshots = None,
-               otherargs={'NQSPEC@plasim_namelist':'1', 'NLOWIO@plasim_namelist':'1'},
+               otherargs={'NQSPEC@plasim_namelist':'1', 'NLOWIO@plasim_namelist':'1',
+               'NPRINT@plasim_namelist':'1','NPRHOR@plasim_namelist':'1'},
                aerosol=True, aerobulk = config['bulk'], asource=1,
                fcoeff = 1e-07, apart = radius, rhop = density, aerofile=config['aerofile'])
 
