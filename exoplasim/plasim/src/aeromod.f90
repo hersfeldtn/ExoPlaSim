@@ -40,7 +40,7 @@
 !      integer,parameter :: aero_j1  = 2  ! 1st lat. outside polar cap
 !      integer,parameter :: aero_j2  = NLAT + 1 - aero_j1 
                                          ! last lat. outside polar cap 
-      real :: apart = 50e-9 ! Radius of aerosol particle in meters
+      real :: apart = 50e-9 ! Radius of aerosol particle in m - DECLARED IN RADMOD AS WELL
       real :: rhop = 1000 ! Density of aerosol particle in kg/m3
       real :: fcoeff = 10e-13 ! Haze mass mixing ratio in kg/kg
 

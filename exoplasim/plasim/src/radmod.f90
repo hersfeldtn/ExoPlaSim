@@ -29,7 +29,7 @@
       integer :: l_aerorad = 0 ! Aerosol scattering and absorption off (0) or on (1)
       character(len=80) :: starfile = " " !Name of input stellar spectrum file
       character(len=80) :: starfilehr = " " !Name of hi-res version of input spectrum
-      character(len=80) :: aerofile = " " ! Name/path to file constaining aerosol optical data
+      character(len=128) :: aerofile = " " ! Name/path to file constaining aerosol optical data
       
       real    :: gsol0   = 1367.0 ! solar constant (set in planet module)
       real    :: solclat = 1.0    ! cos of lat of insolation if ncstsol=1
@@ -89,7 +89,8 @@
       real :: g2 = 0. ! Asymmetry parameter band 2
       real :: qex1 = 0. ! Extinction efficiency band 1
       real :: qex2 = 0. ! Extinction efficiency band 2
-      real :: aeroqs(8) = 0.  ! Array to read in aerosol optical constants
+      real :: aeroqs(8,1) = 0.  ! Array to read in aerosol optical constants
+      real :: apart = 50e-09 ! Aerosol particle radius - DECLARED IN AEROMOD AS WELL
 !
 !*    2.3) arrays
 !
@@ -886,6 +887,7 @@
       endif
       
       if (l_aero > 0 .and. l_aerorad == 1) then
+       if (mypid == NROOT) then
         call readdat(aerofile,1,8,aeroqs) ! Get Qextinction, Qscattering, Qbackscatter, g for band 1 & 2
         
         ssa1 = aeroqs(2)/aeroqs(1) ! Single scattering albedo band 1 (qscat/qext)
@@ -894,6 +896,7 @@
         g2 = aeroqs(8) ! Asymmetry factor band 2
         qex1 = aeroqs(1) ! Extinction efficiency band 1
         qex2 = aeroqs(5) ! Extinction efficiency band 2
+       endif
         
         call mpbcr(ssa1) ! Broadcast optical constants
         call mpbcr(ssa2)
@@ -1571,6 +1574,7 @@
 !
       real zmu0(NHOR)              ! zenit angle
       real zmu1(NHOR)              ! zenit angle
+      real zmu00                   ! Diffusivity factor for scattered/diffuse light
       real zcs(NHOR)               ! clear sky part
       real zscf(NHOR)              ! Pressure scale factor
       real zm(NHOR)                ! magnification factor
@@ -1795,25 +1799,38 @@
       ! Aerosol two-stream multiscattering radiative transfer parametrization from
       ! Lacis & Hansen 1974 (see PlaSim manual) based on Sagan & Pollack 1967
       ! Sagan and Pollack use backscatter ratio whereas Lacis & Hansen use asymmetry factor (g)
+      
+       nrho(:,:) = max(1.0,nrho(:,:)) ! Set number density to minimum 1 particle/m3
         
        do jlev=NLEV,2,-1 ! Need layer thickness in m for optical depth - copied from radstep
         zaerdh(:,jlev)=-dt(:,jlev)*gascon/ga*ALOG(sigmah(jlev-1)/sigmah(jlev))
        enddo
        zaerdh(:,1)=-dt(:,1)*gascon/ga*ALOG(sigma(1)/sigmah(1))*0.5
-        
-       aod1 = nrho(:,:NLEV)*PI*(apart**2)*qex1*zaerdh ! Aerosol optical depth band 1
-       aod2 = nrho(:,:NLEV)*PI*(apart**2)*qex2*zaerdh ! Aerosol optical depth band 2
+       
+       do jlev=1,NLEV
+        aod1 = nrho(:,jlev)*PI*(apart**2)*qex1*zaerdh(:,jlev) ! Aerosol optical depth band 1
+        aod2 = nrho(:,jlev)*PI*(apart**2)*qex2*zaerdh(:,jlev) ! Aerosol optical depth band 2
+       enddo
         
        zaeru1 = SQRT((1.0-g1*ssa1)/(1.0-ssa1)) ! u-factor band 1
        zaeru2 = SQRT((1.0-g2*ssa2)/(1.0-ssa2)) ! u-factor band 2
        ztemp1 = SQRT(3.0*(1.0-ssa1)*(1.0-g1*ssa1))
        ztemp2 = SQRT(3.0*(1.0-ssa2)*(1.0-g1*ssa2))
+       
+       if (mypid == NROOT) then
+        write(nud,*) "Aerosol number density:",nrho
+        write(nud,*) "Aerosol optical depth 1:",aod1
+        write(nud,*) "Aerosol u-factor 1:",zaeru1
+        write(nud,*) "Aerosol temp factor 1:",ztemp1
+        write(nud,*) "Aerosol diffusivity factor:",zmu00
+        write(nud,*) "Aerosol cos of solar zenith angle:",zmu0
+       endif
+
        do jlev=1,NLEV
-        where(losun(:) .and. (nrho(:,jlev) > 0.)) ! direct light first
-         zaertf1(:,jlev) = (ztemp1*aod1(:,jlev))/zmu0  ! effective t band 1
-         zaertf2(:,jlev) = (ztemp2*aod2(:,jlev))/zmu0 ! effective t band 2
-         zaerd1(:,jlev) = (((zaeru1+1.0)**2.0)*EXP(zaertf1(:,jlev)) - ((zaeru1-1.0)**2.0)*EXP(-zaertf1(:,jlev))) ! denominator band 1
-         zaerd2(:,jlev) = (((zaeru2+1.0)**2.0)*EXP(zaertf2(:,jlev)) - ((zaeru2-1.0)**2.0)*EXP(-zaertf2(:,jlev))) ! denominator band 2
+         zaertf1(:,jlev) = MIN(25.,(ztemp1*aod1(:,jlev))/(zmu0+zero))  ! effective t band 1
+         zaertf2(:,jlev) = MIN(25.,(ztemp2*aod2(:,jlev))/(zmu0+zero)) ! effective t band 2
+         zaerd1(:,jlev) = (((zaeru1+1.0)**2.0)*EXP(zaertf1(:,jlev)) - ((zaeru1-1.0)**2.0)/EXP(zaertf1(:,jlev))) ! denominator band 1
+         zaerd2(:,jlev) = (((zaeru2+1.0)**2.0)*EXP(zaertf2(:,jlev)) - ((zaeru2-1.0)**2.0)/EXP(zaertf2(:,jlev))) ! denominator band 2
          zaert1(:,jlev) = (4.0*zaeru1)/zaerd1(:,jlev) ! transmission band 1
          zaert2(:,jlev) = (4.0*zaeru2)/zaerd2(:,jlev) ! transmission band 2
          zaerr1(:,jlev) = (zaeru1 + 1.0)*(zaeru1 - 1.0)*(EXP(zaertf1(:,jlev))-EXP(-zaertf1(:,jlev)))/zaerd1(:,jlev) ! reflection band 1
@@ -1828,8 +1845,15 @@
          zaert2s(:,jlev) = (4.0*zaeru2)/zaerd2(:,jlev) ! transmission band 2
          zaerr1s(:,jlev) = (zaeru1 + 1.0)*(zaeru1 - 1.0)*(EXP(zaertf1(:,jlev))-EXP(-zaertf1(:,jlev)))/zaerd1(:,jlev) ! reflection band 1
          zaerr2s(:,jlev) = (zaeru2 + 1.0)*(zaeru2 - 1.0)*(EXP(zaertf2(:,jlev))-EXP(-zaertf2(:,jlev)))/zaerd2(:,jlev) ! reflection band 1      
-        endwhere
        enddo ! levels loop
+       if (mypid == NROOT) then
+        write(nud,*) "Aerosol effective optical depth 1:",zaertf1
+        write(nud,*) "Aerosol denominator 1:",zaerd1
+        write(nud,*) "Aerosol direct transmission 1:",zaert1
+        write(nud,*) "Aerosol direct reflection 1:",zaerr1
+        write(nud,*) "Aerosol diffuse transmission 1:",zaert1s
+        write(nud,*) "Aerosol diffuse reflection 1:",zaerr1s
+       endif
       endif
 !
 !     compute optical properties
