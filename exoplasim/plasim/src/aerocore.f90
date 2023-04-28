@@ -976,15 +976,15 @@
 ! Define constants
 
     REAL :: kb ! Boltzmann constant
-    REAL :: rad ! Molecular radius of bulk gas
+    REAL :: dm ! Molecular diameter of bulk gas
     REAL :: apart ! Particle radius
     
     kb = 1.3806E-23 ! J/K
     select case(l_bulk) ! N2
     case(1)
-     rad = 0.5*3.64E-10 ! m
+     dm = 3.64E-10 ! m
     case(2) ! H2
-     rad = 0.5*2.827E-10 ! m
+     dm = 2.827E-10 ! m
     end select
 
 !---------------------------------------------------------------
@@ -994,7 +994,7 @@
         airp(:,:,k) = ps(:,:)*sigmah(k) ! Air pressure at mid level in Pa
     ENDDO
         
-    coeff = (kb/rad)*(1./(4.*PI*rad))
+    coeff = (kb/dm)*(1./(SQRT(2.)*PI*dm))
     lambda = coeff*(temp/airp)
     
 ! Calculation of Cunningham factor
