@@ -557,7 +557,7 @@ def readfile(filename):
         import pyfft as pyfft
     else:
         import exoplasim.pyfft as pyfft
-        import pyfft as pyfft
+#        import pyfft as pyfft
     
     with open(filename,"rb") as fb:
         fbuffer = fb.read()
@@ -659,7 +659,7 @@ def _transformvar(lon,lat,variable,meta,nlat,nlon,nlev,ntru,ntime,mode='grid',
         import pyfft as pyfft 
     else:
         import exoplasim.pyfft as pyfft
-        import pyfft as pyfft
+#        import pyfft as pyfft
     
     if nlev in variable.shape:
         levd = "lev"
@@ -959,7 +959,7 @@ def _transformvectorvar(lon,uvar,vvar,umeta,vmeta,lats,nlon,nlev,ntru,ntime,mode
         import pyfft as pyfft
     else:
         import exoplasim.pyfft as pyfft
-        import pyfft as pyfft
+#        import pyfft as pyfft
     
     if np.nanmax(lats)>10: #Dealing with degrees, not radians
         rlats = lats*np.pi/180.0
