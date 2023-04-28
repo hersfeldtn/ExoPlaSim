@@ -1827,6 +1827,7 @@
        endif
 
        do jlev=1,NLEV
+        where(losun(:) .and. nrho(:,jlev) > 0.)
          zaertf1(:,jlev) = MIN(25.,(ztemp1*aod1(:,jlev))/(zmu0+zero))  ! effective t band 1
          zaertf2(:,jlev) = MIN(25.,(ztemp2*aod2(:,jlev))/(zmu0+zero)) ! effective t band 2
          zaerd1(:,jlev) = (((zaeru1+1.0)**2.0)*EXP(zaertf1(:,jlev)) - ((zaeru1-1.0)**2.0)/EXP(zaertf1(:,jlev))) ! denominator band 1
@@ -1845,15 +1846,16 @@
          zaert2s(:,jlev) = (4.0*zaeru2)/zaerd2(:,jlev) ! transmission band 2
          zaerr1s(:,jlev) = (zaeru1 + 1.0)*(zaeru1 - 1.0)*(EXP(zaertf1(:,jlev))-EXP(-zaertf1(:,jlev)))/zaerd1(:,jlev) ! reflection band 1
          zaerr2s(:,jlev) = (zaeru2 + 1.0)*(zaeru2 - 1.0)*(EXP(zaertf2(:,jlev))-EXP(-zaertf2(:,jlev)))/zaerd2(:,jlev) ! reflection band 1      
+        endwhere
        enddo ! levels loop
-       if (mypid == NROOT) then
-        write(nud,*) "Aerosol effective optical depth 1:",zaertf1
-        write(nud,*) "Aerosol denominator 1:",zaerd1
-        write(nud,*) "Aerosol direct transmission 1:",zaert1
-        write(nud,*) "Aerosol direct reflection 1:",zaerr1
-        write(nud,*) "Aerosol diffuse transmission 1:",zaert1s
-        write(nud,*) "Aerosol diffuse reflection 1:",zaerr1s
-       endif
+       ! if (mypid == NROOT) then
+        ! write(nud,*) "Aerosol effective optical depth 1:",zaertf1
+        ! write(nud,*) "Aerosol denominator 1:",zaerd1
+        ! write(nud,*) "Aerosol direct transmission 1:",zaert1
+        ! write(nud,*) "Aerosol direct reflection 1:",zaerr1
+        ! write(nud,*) "Aerosol diffuse transmission 1:",zaert1s
+        ! write(nud,*) "Aerosol diffuse reflection 1:",zaerr1s
+       ! endif
       endif
 !
 !     compute optical properties
