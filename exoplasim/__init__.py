@@ -2350,7 +2350,8 @@ References
         self._edit_namelist("planet_namelist","NGENKEPLERIAN",str(keplerian*1))
         self.keplerian=keplerian
         
-        self._edit_namelist("planet_namelist","MEANANOM0",str(meananomaly0))
+        if meananomaly0 is not None:
+            self._edit_namelist("planet_namelist","MEANANOM0",str(meananomaly0))
         self.meananomaly0 = meananomaly0
         
         if type(orography)!=type(None):
@@ -3019,7 +3020,8 @@ References
                 self._edit_namelist("planet_namelist","NGENKEPLERIAN",str(self.keplerian*1))
             if key=="meananomaly0":
                 self.meananomaly0=value
-                self._edit_namelist("planet_namelist","MEANANOMALY0",str(self.meananomaly0))
+                if self.meanomaly0 is not None:
+                    self._edit_namelist("planet_namelist","MEANANOMALY0",str(self.meananomaly0))
             if key=="tlcontrast":
                 self.tlcontrast=value
                 self._edit_namelist("plasim_namelist","DTTL",str(self.tlcontrast))
