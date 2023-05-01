@@ -112,6 +112,7 @@
 !
       integer, parameter :: ORB_UNDEF_INT  = 2000000000  
       real :: obliqr   ! Earth's obliquity in radians
+      real :: meananom0 ! Initial mean anomaly in degrees
       real :: meananom0r ! Initial mean anomaly in radians
       real :: lambm0   ! Mean longitude of perihelion at the
                        ! vernal equinox (radians)
@@ -852,9 +853,13 @@
       if (nfixorb == 1) then ! fixed orbital params (default AMIP II)
          iyrad = ORB_UNDEF_INT
       endif
-      call orb_params(iyrad, eccen, obliq, mvelp                          &
-     &               ,obliqr, lambm0, mvelpp, log_print, ngenkeplerian &
+      call orb_params(iyrad, eccen, obliq, meananom0, mvelp                          &
+     &               ,obliqr, meananom0r, lambm0, mvelpp, log_print, ngenkeplerian &
      &               ,mypid, nroot,nud)
+     
+     
+     call mpbcr(meananom0r)
+     call mpbci(ngenkeplerian)
 
 !
 !     read climatological ozone
