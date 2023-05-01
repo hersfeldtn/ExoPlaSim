@@ -112,7 +112,6 @@
 !
       integer, parameter :: ORB_UNDEF_INT  = 2000000000  
       real :: obliqr   ! Earth's obliquity in radians
-      real :: meananom0 ! Initial mean anomaly in degrees
       real :: meananom0r ! Initial mean anomaly in radians
       real :: lambm0   ! Mean longitude of perihelion at the
                        ! vernal equinox (radians)
