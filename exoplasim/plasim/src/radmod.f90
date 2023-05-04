@@ -892,8 +892,8 @@
         
         ssa1 = aeroqs(2,1)/aeroqs(1,1) ! Single scattering albedo band 1 (qscat/qext)
         ssa2 = aeroqs(6,1)/aeroqs(5,1) ! Single scattering albedo band 2
-        bscat1 = aeroqs(3,1)/aeroqs(1,1) ! Backscatter ratio band 1
-        bscat2 = aeroqs(7,1)/aeroqs(5,1) ! Backscatter ratio band 2
+        bscat1 = aeroqs(3,1)/aeroqs(2,1) ! Backscatter ratio band 1
+        bscat2 = aeroqs(7,1)/aeroqs(6,1) ! Backscatter ratio band 2
         qex1 = aeroqs(1,1) ! Extinction efficiency band 1
         qex2 = aeroqs(5,1) ! Extinction efficiency band 2
        endif
