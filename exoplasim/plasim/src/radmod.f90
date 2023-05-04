@@ -85,10 +85,10 @@
       
       real :: ssa1 = 0. ! Single scattering albedo band 1
       real :: ssa2 = 0. ! Single scattering albedo band 2
-      real :: g1 = 0. ! Asymmetry parameter band 1
-      real :: g2 = 0. ! Asymmetry parameter band 2
       real :: qex1 = 0. ! Extinction efficiency band 1
       real :: qex2 = 0. ! Extinction efficiency band 2
+      real :: bscat1 = 0. ! Backscattering ratio band 1
+      real :: bscat2 = 0. ! Backscattering ratio band 2
       real :: aeroqs(8,1) = 0.  ! Array to read in aerosol optical constants
       real :: apart = 50e-09 ! Aerosol particle radius - DECLARED IN AEROMOD AS WELL
 !
@@ -892,16 +892,16 @@
         
         ssa1 = aeroqs(2,1)/aeroqs(1,1) ! Single scattering albedo band 1 (qscat/qext)
         ssa2 = aeroqs(6,1)/aeroqs(5,1) ! Single scattering albedo band 2
-        g1 = aeroqs(4,1) ! Asymmetry factor band 1
-        g2 = aeroqs(8,1) ! Asymmetry factor band 2
+        bscat1 = aeroqs(3,1)/aeroqs(1,1) ! Backscatter ratio band 1
+        bscat2 = aeroqs(7,1)/aeroqs(5,1) ! Backscatter ratio band 2
         qex1 = aeroqs(1,1) ! Extinction efficiency band 1
         qex2 = aeroqs(5,1) ! Extinction efficiency band 2
        endif
         
         call mpbcr(ssa1) ! Broadcast optical constants
         call mpbcr(ssa2)
-        call mpbcr(g1)
-        call mpbcr(g2)
+        call mpbcr(bscat1)
+        call mpbcr(bscat2)
         call mpbcr(qex1)
         call mpbcr(qex2)
       endif
@@ -1796,9 +1796,9 @@
 
       if (l_aero > 0 .and. l_aerorad == 1) then
       
-      ! Aerosol two-stream multiscattering radiative transfer parametrization from
-      ! Lacis & Hansen 1974 (see PlaSim manual) based on Sagan & Pollack 1967
-      ! Sagan and Pollack use backscatter ratio whereas Lacis & Hansen use asymmetry factor (g)
+      ! Aerosol two-stream multiscattering radiative transfer approximation from
+      ! Stephens (1978), with data read from outside the model instead of a parameterization
+      ! for the effective optical depht and single scattering albedo
       
        nrho(:,:) = max(1.0,nrho(:,:)) ! Set number density to minimum 1 particle/m3
         
@@ -1812,10 +1812,10 @@
         aod2(:,jlev) = nrho(:,jlev)*PI*(apart**2)*qex2*zaerdh(:,jlev) ! Aerosol optical depth band 2
        enddo
         
-       zaeru1 = SQRT((1.0-g1*ssa1)/(1.0-ssa1)) ! u-factor band 1
-       zaeru2 = SQRT((1.0-g2*ssa2)/(1.0-ssa2)) ! u-factor band 2
-       ztemp1 = SQRT(3.0*(1.0-ssa1)*(1.0-g1*ssa1))
-       ztemp2 = SQRT(3.0*(1.0-ssa2)*(1.0-g1*ssa2))
+       zaeru1 = SQRT((1.0-ssa1+2*bscat1*ssa1)/(1.0-ssa1)) ! u-factor band 1
+       zaeru2 = SQRT((1.0-ssa2+2*bscat2*ssa2)/(1.0-ssa2)) ! u-factor band 2
+       ztemp1 = SQRT((1.0-ssa1)*(1.0-ssa1+2*bscat1*ssa1))
+       ztemp2 = SQRT((1.0-ssa2)*(1.0-ssa2+2*bscat2*ssa2))
        
        if (mypid == NROOT) then
         write(nud,*) "Aerosol number density:",nrho
@@ -1838,8 +1838,8 @@
          zaerr2(:,jlev) = (zaeru2 + 1.0)*(zaeru2 - 1.0)*(EXP(zaertf2(:,jlev))-EXP(-zaertf2(:,jlev)))/zaerd2(:,jlev) ! reflection band 1      
 
          ! Next do scattered light
-         zaertf1s(:,jlev) = (ztemp1*aod1(:,jlev))/zmu00  ! effective t band 1 using zmu00 not zmu0!
-         zaertf2s(:,jlev) = (ztemp2*aod2(:,jlev))/zmu00 ! effective t band 2
+         zaertf1s(:,jlev) = MIN(25.,(ztemp1*aod1(:,jlev))/zmu00)  ! effective t band 1 using zmu00 not zmu0!
+         zaertf2s(:,jlev) = MIN(25.,(ztemp2*aod2(:,jlev))/zmu00) ! effective t band 2
          zaerd1s(:,jlev) = (((zaeru1+1.0)**2.0)*EXP(zaertf1(:,jlev)) - ((zaeru1-1.0)**2.0)*EXP(-zaertf1(:,jlev))) ! denominator band 1
          zaerd2s(:,jlev) = (((zaeru2+1.0)**2.0)*EXP(zaertf2(:,jlev)) - ((zaeru2-1.0)**2.0)*EXP(-zaertf2(:,jlev))) ! denominator band 2
          zaert1s(:,jlev) = (4.0*zaeru1)/zaerd1(:,jlev) ! transmission band 1
