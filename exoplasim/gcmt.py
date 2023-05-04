@@ -1420,16 +1420,16 @@ def eq2tl_uv(u, v, lon, lat, substellar=0.0):
     return lon_tl,lat_tl,u_tl,v_tl    
 
 
-def tlstream(dataset,plarad=6371.0e3,grav=9.80665,substellar=0.0):
+def tlstream(dataset,radius=6371.0e3,gravity=9.80665,substellar=0.0):
     '''Compute the tidally-locked streamfunction
     
     Parameters
     ----------
     dataset : str or ExoPlaSim Dataset
         Either path to ExoPlaSim Dataset of model output or an instance of the dataset.
-    plarad : float, optional
+    radius : float, optional
         Planetary radius [m]
-    grav : float, optional
+    gravity : float, optional
         Surface gravity [m/s^2]
     substellar : float, optional
         Longitude of the substellar point in degrees.
@@ -1452,7 +1452,10 @@ def tlstream(dataset,plarad=6371.0e3,grav=9.80665,substellar=0.0):
     #mva = np.nanmean(va_TL,axis=3) #tidally-locked meridional wind
     #ps = spatialmath(dataset.variables['ps'][:],lon=lon,lat=lat)
     lev = dataset.variables['lev'][:]
-    pa = dataset.variables['ps'][:,np.newaxis,:,:] * lev[np.newaxis,:,np.newaxis,np.newaxis] * 100.0
+    lev = np.array(lev)
+    ps = dataset.variables['ps']
+    ps = np.array(ps)
+    pa = ps[:,np.newaxis,:,:] * lev[np.newaxis,:,np.newaxis,np.newaxis] * 100.0
 
     nlon = len(lon)
     nlat = len(lat)
@@ -1463,9 +1466,7 @@ def tlstream(dataset,plarad=6371.0e3,grav=9.80665,substellar=0.0):
     for nt in range(ntime):
         for jlat in range(nlat):
             for jlon in range(nlon):
-                vadp[nt,:jlat,jlon] = cumtrapz(va_TL[nt,:,jlat,jlon],
-                                               x=pa[nt,:,jlat,jlon],
-                                               initial=0.0)
+                vadp[nt,:,jlat,jlon] = cumtrapz(va_TL[nt,:,jlat,jlon],x=pa[nt,:,jlat,jlon],initial=0.0)
         
     prefactor = 2*np.pi*radius/gravity*np.cos(lat*np.pi/180.0)
     sign = -1 #-1 for synchronous, 1 for equatorial
