@@ -210,7 +210,7 @@
       integer :: nspinit  = 0   ! switch for LnPs initialization
       integer :: nsponge  = 0   ! switch for top sponge layer
       integer :: nstratosponge = 0 ! Switch for Newtonian cooling in hybrid stratosphere
-      integer :: nqspec   = 0   ! 1: spectral q   0: gridpoint q (semi-Langrangian)
+      integer :: nqspec   = 1   ! 1: spectral q   0: gridpoint q (semi-Langrangian)
       integer :: nrdrag   = 0   ! 1: Apply Rayleigh fraction to 20-layer atmosphere
       integer :: l_aero    = 1   ! 1: Aerosols on; this also enables the semi-Lagrangian advection tracer grid initialisations
 !>>> AYP -- NEEDED AS PART OF GLACIERMOD      
