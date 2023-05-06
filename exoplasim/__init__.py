@@ -1199,7 +1199,7 @@ class Model(object):
             os.system("cp %s %s.DIAG"%(diags[-1],self.modelname))
             if self.snapshots:
                 if self.extension==".npz" or self.extension==".npy":
-                    metasnps = sorted(glob.glob("%s/snapshots/*metadata%s"%(self.workdir,self.extension)))
+                    metasnps = sorted(glob.glob("%s/*SNAP*metadata%s"%(self.workdir,self.extension)))
                     tmpsnps = sorted(glob.glob("%s/snapshots/*%s"%(self.workdir,self.extension)))
                     snps = sorted(list(set(tmpsnps)-set(metasnps)))
                 else:
