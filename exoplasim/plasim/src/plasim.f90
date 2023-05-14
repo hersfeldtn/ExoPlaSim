@@ -2316,7 +2316,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       character(len=30) title
 
       title = 'Fractional Day'
-      call wrorb(zcday,title)
+      call wrorb(zcdayf,title)
       title = 'True Anomaly [deg]'
       call wrorb(orbnu*180./PI,title)
       title = 'Solar Declination [deg]'

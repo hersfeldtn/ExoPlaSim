@@ -120,7 +120,7 @@
       real :: eccf=0.  ! Earth-sun distance factor ( i.e. (1/r)**2 )
       real :: orbnu=0. ! Earth true anomaly in radians.
       real :: lambm=0. ! Solar ecliptic longitude in radians
-      real :: zcday=0. ! Fractional day
+      real :: zcdayf=0. ! Fractional day
       integer :: iyrad ! Year AD to calculate orbit for
       logical, parameter :: log_print = .true.
                        ! Flag to print-out status information or not.
@@ -1342,6 +1342,7 @@
       else
           call gen_orb_decl(zcday, eccen, obliqr, mvelpp, orbnu, lambm, zdecl, eccf)
       endif
+      zcdayf = zcday
 !
 !**   3) compute zenith angle
 !
