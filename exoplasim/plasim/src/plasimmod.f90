@@ -488,6 +488,10 @@
 !
 !     accumulated output
 !
+      real :: aorbnu = 0. !Accumulated true anomaly
+      real :: alambm = 0. !Accumulated solar ecliptic longitude
+      real :: azdecl = 0. !Accumualted solar declination angle
+      real :: ardist = 0. !Accumulated solar distance modulus
 
       real :: aevap(NHOR) = 0. ! acculumated evaporation
       real :: aprl(NHOR)  = 0. ! acculumated lage scale precip.

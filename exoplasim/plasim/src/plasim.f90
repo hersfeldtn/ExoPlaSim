@@ -655,6 +655,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call outaccu
 
          if (mod(nhcstp,nstps) == 0 .and. nsnapshot > 0) then
+           call snapshotsc
            call snapshotgp
            koutdiag=ndiaggp3d+ndiaggp2d+ndiagsp3d+ndiagsp2d+ndiagcf     &
      &             +nentropy+nenergy
@@ -668,6 +669,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
              write(nud,*) "HC OUTPUT step",nhcstp
              if (mod(nhcstp-hcstartstep,hcinterval)==0) then
                 call hcadencegp(141)
+                call hcadencegp(141)
 !                 koutdiag=ndiaggp3d+ndiaggp2d+ndiagsp3d+ndiagsp2d+ndiagcf     &
 !      &                   +nentropy+nenergy
 !                 if(koutdiag > 0) call hcadencediag
@@ -676,11 +678,13 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          endif
          if (nwritehurricane>0 .and. mod(nhcstp,hcinterval)==0) then
             write(nud,*) "HC STORM CAPTURE step",nhcstp
+            call hcadencesp(142)
             call hcadencegp(142)
          endif
          if (mod(nhcstp,nafter) == 0) then
           if(noutput > 0) then
 !            write(nud,*) "High-cadence step",nhcstp
+           call outsc
            call outgp
            koutdiag=ndiaggp3d+ndiaggp2d+ndiagsp3d+ndiagsp2d+ndiagcf     &
      &             +nentropy+nenergy
@@ -2286,13 +2290,34 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       end
 
 !     ================
+!     SUBROUTINE WRORB
+!     ================
+
+      subroutine wrorb(zf,title)
+      use pumamod
+      
+      real zf
+      character(len=30) title
+      character(len=18) datch
+      
+      call ntodat(nstep,datch)
+      write(nud,20030) datch,title,zf
+      
+20030 format('>>>   * ',a18,2x,a30,' = ',f7.3,10x,'*') 
+      
+!     ================
 !     SUBROUTINE XSECT
 !     ================
 
       subroutine xsect
       use pumamod
+      use radmod
       character(len=30) title
 
+      call wrorb(orbnu*180./PI,'True Anomaly [deg]')
+      call wrorb(zdecl*180./PI,'Solar Declination [deg]')
+      call wrorb(lambm*180./PI,'Ecliptic Longitude [deg]')
+      call wrorb(eccf,'Distance Modulus')
       scale = 10.0
       title = 'Zonal Wind [0.1 m/s]'
       call wrzs(csu,title,scale)

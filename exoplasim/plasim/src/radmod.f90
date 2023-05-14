@@ -117,8 +117,9 @@
                        ! vernal equinox (radians)
       real :: mvelpp   ! Earth's moving vernal equinox longitude
                        ! of perihelion plus pi (radians)
-      real :: eccf     ! Earth-sun distance factor ( i.e. (1/r)**2 )
+      real :: eccf=0.  ! Earth-sun distance factor ( i.e. (1/r)**2 )
       real :: orbnu=0. ! Earth true anomaly in radians.
+      real :: lambm=0. ! Solar ecliptic longitude in radians
       integer :: iyrad ! Year AD to calculate orbit for
       logical, parameter :: log_print = .true.
                        ! Flag to print-out status information or not.
@@ -1336,9 +1337,9 @@
 !**   2) compute declination [radians]
 !
       if (ngenkeplerian == 0) then
-          call orb_decl(zcday, eccen, mvelpp, lambm0, obliqr, zdecl, eccf)
+          call orb_decl(zcday, eccen, mvelpp, lambm0, obliqr, orbnu, lambm, zdecl, eccf)
       else
-          call gen_orb_decl(zcday, eccen, obliqr, mvelpp, orbnu, zdecl, eccf)
+          call gen_orb_decl(zcday, eccen, obliqr, mvelpp, orbnu, lambm, zdecl, eccf)
       endif
 !
 !**   3) compute zenith angle
@@ -1362,7 +1363,8 @@
        do jlat = 1 , NLPP
         do jlon = 0 , NLON-1
          jhor = jhor + 1
-         zhangle = zmins * zrtim + jlon * zrlon - PI - orbnu
+         zhangle = zmins * zrtim + jlon * zrlon - PI
+         if (ngenkeplerian==1) zhangle = zhangle - orbnu
          if (zhangle < -PI) zhangle = zhangle + TWOPI
          if (zhangle > PI) zhangle = zhangle - TWOPI
          
@@ -2322,7 +2324,7 @@
 !     compute the declination and true anomaly. This uses a Newton-Raphson iterator and
 !     will work with reasonable accuracy for any bound orbit (eccen<1.0).
 
-      subroutine gen_orb_decl(yearfraction, eccen, obliqr, mvelpp, trueanomaly, zdecl, eccf)
+      subroutine gen_orb_decl(yearfraction, eccen, obliqr, mvelpp, trueanomaly, lamb, zdecl, eccf)
       use radmod, only : TWOPI, meananom0r, nfixed
       !Inputs
       real :: eccen        ! Eccentricity
@@ -2333,7 +2335,6 @@
       !Internal
       real :: meananomaly
       real :: eccenanomaly ! Eccentric anomaly
-      real :: lamb         ! True anomaly - longitude of vernal equinox
       real thyng
       real anomarg
       real invrho
@@ -2341,6 +2342,7 @@
       real :: trueanomaly  ! True anomaly in radians
       real :: zdecl        ! Solar declination in radians
       real :: eccf         ! Eccentricity factor for insolation
+      real :: lamb         ! True anomaly - longitude of vernal equinox
       
       if (nfixed > 0) then
           trueanomaly = 0.
@@ -2957,7 +2959,7 @@
 !     SUBROUTINE ORB_DECL
 !     ===================
 
-      subroutine orb_decl(calday,eccen,mvelpp,lambm0,obliqr,delta,eccf)
+      subroutine orb_decl(calday,eccen,mvelpp,lambm0,obliqr,tnu,lamb,delta,eccf)
       use pumamod, only: mcal_days_per_year,ndatim
 !
 !     Compute earth/orbit parameters using formula suggested by
@@ -2984,6 +2986,8 @@
 !     ----------------
       real :: delta      ! Solar declination angle in radians
       real :: eccf       ! Earth-sun distance factor ( i.e. (1/r)**2 )
+      real :: lamb    ! Lambda, the earth's longitude of perihelion
+      real :: tnu     ! Earth's true anomaly in radians
 !
 !     Local variables
 !     ---------------
@@ -2993,7 +2997,6 @@
 !
       real :: lambm   ! Lambda m, earth's mean longitude of perihelion (radians)
       real :: lmm     ! Intermediate argument involving lambm
-      real :: lamb    ! Lambda, the earth's longitude of perihelion
       real :: invrho  ! Inverse normalized sun/earth distance
       real :: sinl    ! Sine of lmm
 !
@@ -3040,6 +3043,7 @@
 !
       delta  = asin(sin(obliqr)*sin(lamb))
       eccf   = invrho*invrho
+      tnu = MOD(lamb - mvelpp, 2*pie)
 !
       return
       end subroutine orb_decl

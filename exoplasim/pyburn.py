@@ -41,7 +41,11 @@ def _log(destination,string):
             f.write(string+"\n")
 
 #dictionary that can be searched by string (integer) codes
-ilibrary = {"110":["mld"  ,"mixed_layer_depth"               ,"m"          ], 
+ilibrary = { "50":["nu"   ,"true_anomaly"                    ,"deg"        ],
+             "51":["lambda","ecliptic_longitude"             ,"deg"        ],
+             "52":["zdec" ,"solar_declination"               ,"deg"        ],
+             "53":["rdist","orbital_distance"                ,"1"          ],
+            "110":["mld"  ,"mixed_layer_depth"               ,"m"          ], 
             "129":["sg"   ,"surface_geopotential"            ,"m2 s-2"     ],
             "130":["ta"   ,"air_temperature"                 ,"K"          ],
             "131":["ua"   ,"eastward_wind"                   ,"m s-1"      ],
@@ -505,7 +509,7 @@ def refactorvariable(variable,header,nlev=10):
     Returns
     -------
     numpy.ndarray
-        A numpy array with dimensions (time,lat,lon) if ``nlevs=1``, or (time,lev,lat,lon) otherwise.
+        A numpy array with dimensions inferred from the header.
     '''
     dim1 = max(header[4],header[5])
     dim2 = min(header[4],header[5])
@@ -518,12 +522,18 @@ def refactorvariable(variable,header,nlev=10):
     ntimes = int(len(variable)//(dim1*dim2*nlevs))
     if nlevs==1:
         if dim2==1:
-            newvar = np.reshape(variable,(ntimes,dim1))
+            if dim1==1:
+                newvar = np.reshape(variable,(ntimes,))
+            else:
+                newvar = np.reshape(variable,(ntimes,dim1))
         else:
             newvar = np.reshape(variable,(ntimes,dim2,dim1))
     else:
         if dim2==1:
-            newvar = np.reshape(variable,(ntimes,nlevs,dim1))
+            if dim1==1:
+                newvar = np.reshape(variable,(ntimes,nlevs))
+            else:
+                newvar = np.reshape(variable,(ntimes,nlevs,dim1))
         else:
             newvar = np.reshape(variable,(ntimes,nlevs,dim2,dim1))
             
@@ -696,11 +706,15 @@ def _transformvar(lon,lat,variable,meta,nlat,nlon,nlev,ntru,ntime,mode='grid',
             gridvar = variable
             if len(variable.shape)==3:
                 dims = ["time","lat","lon"]
+            elif len(variable.shape)==2: #column
+                dims = ["time",levd]
+            elif len(variable.shape)==1: #scalar
+                dims = ["time",]
             else:
                 dims = ["time",levd,"lat","lon"]
         if meta[0]=="hus":
             gridvar[gridvar<0] = 0.0
-        if zonal:
+        if zonal and "lon" in dims:
             gridvar = np.nanmean(gridvar,axis=-1)
             dims.remove("lon")
         meta.append(tuple(dims))
@@ -732,17 +746,21 @@ def _transformvar(lon,lat,variable,meta,nlat,nlon,nlev,ntru,ntime,mode='grid',
             gridvar = variable
             if len(variable.shape)==3:
                 dims = ["time","lat","lon"]
+            elif len(variable.shape)==2: #column
+                dims = ["time",levd]
+            elif len(variable.shape)==1: #scalar
+                dims = ["time",]
             else:
                 dims = ["time",levd,"lat","lon"]
         if meta[0]=="hus":
             gridvar[gridvar<0] = 0.0
-        if not presync:
+        if not presync and "lat" in dims:
             lon,lat,tlgridvar = gcmt.eq2tl(gridvar,lon,lat,substellar=substellarlon,
                                            polemethod='interp') #fine bc all vectors are derived
         else:
             tlgridvar = gridvar
         
-        if zonal:
+        if zonal and "lon" in dims:
             tlgridvar = np.nanmean(tlgridvar,axis=-1)
             dims.remove("lon")
         meta.append(tuple(dims))
@@ -764,23 +782,32 @@ def _transformvar(lon,lat,variable,meta,nlat,nlon,nlev,ntru,ntime,mode='grid',
                                                    (ntimes*nlevs,nlat,nlon)))
                            )
                 dims = ("time",levd,"modes","complex")
+            elif len(variable.shape)==2: #column
+                outvar = variable
+                dims = ("time",levd)
+                meta.append(dims)
+            elif len(vairable.shape)==1: #scalar
+                outvar = variable
+                dims = ("time",)
+                meta.append(dims)
             else:
-                
                 ntimes = variable.shape[0]
                 gpvar = np.asfortranarray(
                            np.transpose(np.reshape(variable,
                                                    (ntimes,nlat,nlon)))
                            )
                 dims = ("time","modes","complex")
-            spvar = pyfft.gp2sp(gpvar,nlat,nlon,ntru,int(physfilter))
-            specvar = np.transpose(spvar)
-        shape = list(specvar.shape)
-        shape[-1] //= 2
-        shape.append(2)
-        shape = tuple(shape)
-        specvar = np.reshape(specvar,shape)
-        meta.append(dims)
-        outvar = specvar
+            if "modes" in dims:
+                spvar = pyfft.gp2sp(gpvar,nlat,nlon,ntru,int(physfilter))
+                specvar = np.transpose(spvar)
+        if "modes" in dims:
+            shape = list(specvar.shape)
+            shape[-1] //= 2
+            shape.append(2)
+            shape = tuple(shape)
+            specvar = np.reshape(specvar,shape)
+            meta.append(dims)
+            outvar = specvar
         
     elif mode=="fourier":
         if (ntru+1)*(ntru+2) in variable.shape: #spectral variable
@@ -813,6 +840,12 @@ def _transformvar(lon,lat,variable,meta,nlat,nlon,nlev,ntru,ntime,mode='grid',
                            )
                 fcshape = (ntimes,nlevs,nlat,nlon//2,2)
                 dims = ["time",levd,"lat","fourier","complex"]
+            elif len(variable.shape)==2: #column
+                fouriervar = variable
+                dims = ["time",levd]
+            elif len(variable.shape)==1: #scalar
+                fouriervar = variable
+                dims = ["time",]
             else:
                 ntimes = variable.shape[0]
                 gpvar = np.asfortranarray(
@@ -821,8 +854,9 @@ def _transformvar(lon,lat,variable,meta,nlat,nlon,nlev,ntru,ntime,mode='grid',
                            )
                 fcshape = (ntimes,nlat,nlon//2,2)
                 dims = ["time","lat","fourier","complex"]
-            fcvar = pyfft.gp3fc(gpvar)
-            fouriervar = np.reshape(np.transpose(fcvar),fcshape)
+            if "fourier" in dims:
+                fcvar = pyfft.gp3fc(gpvar)
+                fouriervar = np.reshape(np.transpose(fcvar),fcshape)
         meta.append(tuple(dims))
         outvar = fouriervar
         
@@ -853,15 +887,19 @@ def _transformvar(lon,lat,variable,meta,nlat,nlon,nlev,ntru,ntime,mode='grid',
             gridvar = variable
             if len(variable.shape)==3:
                 dims = ["time","lat","lon"]
+            elif len(variable.shape)==2: #column
+                dims = ["time",levd]
+            elif len(variable.shape)==1: #scalar
+                dims = ["time",]
             else:
                 dims = ["time",levd,"lat","lon"]
         if meta[0]=="hus":
             gridvar[gridvar<0] = 0.0
-        if zonal:
+        if zonal and "lon" in dims:
             gridvar = np.nanmean(gridvar,axis=-1)
             dims.remove("lon")
         
-        if not presync:
+        if not presync and "lat" in dims:
             lon,lat,tlgridvar = gcmt.eq2tl(gridvar,lon,lat,substellar=substellarlon,
                                            polemethod='interp') #fine bc all vectors are derived
         else:
@@ -873,31 +911,34 @@ def _transformvar(lon,lat,variable,meta,nlat,nlon,nlev,ntru,ntime,mode='grid',
         #substellar polar meridian, while 90 degrees "latitude" will be the transform along
         #the equatorial meridian.
 
-        rottlgridvar = np.zeros(tlgridvar.shape)
-        for jlon in range(nlats):
-            rottlgridvar[...,jlon,:nlats] = tlgridvar[...,jlon]
-            rottlgridvar[...,jlon,nlats:] = tlgridvar[...,jlon+nlats]    
-        
-        #Compute fourier coefficients along our new "longitudes"
-        if len(rottlgridvar.shape)==4: #include lev
-            nlevs = rottlgridvar.shape[1]
-            ntimes = rottlgridvar.shape[0]
-            gpvar = np.asfortranarray(
-                       np.transpose(np.reshape(rottlgridvar/1.4142135623730951,
-                                               (ntimes*nlevs,nlat,nlon)))
-                       )
-            fcshape = (ntimes,nlevs,nlat,nlon//2,2)
-            dims = ["time",levd,"lat","fourier","complex"]
+        if "lat" in dims:
+            rottlgridvar = np.zeros(tlgridvar.shape)
+            for jlon in range(nlats):
+                rottlgridvar[...,jlon,:nlats] = tlgridvar[...,jlon]
+                rottlgridvar[...,jlon,nlats:] = tlgridvar[...,jlon+nlats]    
+            
+            #Compute fourier coefficients along our new "longitudes"
+            if len(rottlgridvar.shape)==4: #include lev
+                nlevs = rottlgridvar.shape[1]
+                ntimes = rottlgridvar.shape[0]
+                gpvar = np.asfortranarray(
+                        np.transpose(np.reshape(rottlgridvar/1.4142135623730951,
+                                                (ntimes*nlevs,nlat,nlon)))
+                        )
+                fcshape = (ntimes,nlevs,nlat,nlon//2,2)
+                dims = ["time",levd,"lat","fourier","complex"]
+            else:
+                ntimes = rottlgridvar.shape[0]
+                gpvar = np.asfortranarray(
+                        np.transpose(np.reshape(rottlgridvar/1.4142135623730951,
+                                                (ntimes,nlat,nlon)))
+                        )
+                fcshape = (ntimes,nlat,nlon//2,2)
+                dims = ["time","lat","fourier","complex"]
+            fcvar = pyfft.gp3fc(gpvar)
+            fouriervar = np.reshape(np.transpose(fcvar),fcshape)
         else:
-            ntimes = rottlgridvar.shape[0]
-            gpvar = np.asfortranarray(
-                       np.transpose(np.reshape(rottlgridvar/1.4142135623730951,
-                                               (ntimes,nlat,nlon)))
-                       )
-            fcshape = (ntimes,nlat,nlon//2,2)
-            dims = ["time","lat","fourier","complex"]
-        fcvar = pyfft.gp3fc(gpvar)
-        fouriervar = np.reshape(np.transpose(fcvar),fcshape)
+            fouriervar = tlgridvar
         meta.append(tuple(dims))
         outvar = fouriervar
         

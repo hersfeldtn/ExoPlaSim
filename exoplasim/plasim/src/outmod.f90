@@ -168,6 +168,109 @@
       return
       end
 
+!     ======================
+!     SUBROUTINE WRITESCALAR
+!     ======================
+
+!     This will output a single scalar per timestep
+
+      subroutine writescalar(kunit,pf,kcode)
+      use pumamod
+      real :: pf
+      integer(kind=4) :: ihead(8)
+
+      istep = nstep
+      call ntomin(istep,nmin,nhour,nday,nmonth,nyear)
+
+      ihead(1) = kcode
+      ihead(2) = 0
+      ihead(3) = nday + 100 * nmonth + 10000 * nyear
+      ihead(4) = nmin + 100 * nhour
+      ihead(5) = 1
+      ihead(6) = 1
+      ihead(7) = nstep - nstep1
+      ihead(8) = m_days_per_year
+
+      write (kunit) ihead
+      write (kunit) pf
+
+      return
+      end
+      
+!     ======================
+!     SUBROUTINE WRITECOLUMN
+!     ======================
+
+!     This will output a single column per timestep. Currently unused, but it could be.
+
+      subroutine writecolumn(kunit,pf,kcode,klev)
+      use pumamod
+      real :: pf
+      integer(kind=4) :: ihead(8)
+
+      istep = nstep
+      call ntomin(istep,nmin,nhour,nday,nmonth,nyear)
+
+      ihead(1) = kcode
+      ihead(2) = klev
+      ihead(3) = nday + 100 * nmonth + 10000 * nyear
+      ihead(4) = nmin + 100 * nhour
+      ihead(5) = 1
+      ihead(6) = 1
+      ihead(7) = nstep - nstep1
+      ihead(8) = m_days_per_year
+
+      write (kunit) ihead
+      write (kunit) pf
+
+      return
+      end
+      
+!     ================
+!     SUBROUTINE OUTSC
+!     ================
+!     !Output scalars of interest
+
+      subroutine outsc
+      use pumamod
+      use radmod
+      
+      if (nlowio .eq. 0) then
+        
+        !True anomaly
+        call writescalar(40,orbnu*180./PI,50)
+        
+        !Solar ecliptic longitude
+        call writescalar(40,lambm*180./PI,51)
+        
+        !Solar declination
+        call writescalar(40,zdecl*180./PI,52)
+        
+        !Solar distance modulus
+        call writescalar(40,1.0/sqrt(eccf),53)
+        
+      else !low IO mode
+        !True anomaly
+        aorbnu = aorbnu/real(max(1,naccuout))
+        call writescalar(40,aorbnu*180./PI,50)
+        
+        !Solar ecliptic longitude
+        alambm = alambm/real(max(1,naccuout))
+        call writescalar(40,alambm*180./PI,51)
+        
+        !Solar declination
+        azdecl = azdecl/real(max(1,naccuout))
+        call writescalar(40,azdecl*180./PI,52)
+        
+        !Solar distance modulus
+        ardist = ardist/real(max(1,naccuout))
+        call writescalar(40,ardist,53)
+      endif
+      
+      return
+      end
+      
+      
 !     ================
 !     SUBROUTINE OUTSP
 !     ================
@@ -1555,6 +1658,31 @@
       end
       
 !     =====================
+!     SUBROUTINE SNAPSHOTSC
+!     =====================
+!     !Output scalars of interest
+
+      subroutine snapshotsc
+      use pumamod
+      use radmod
+      
+        !True anomaly
+        call writescalar(140,orbnu*180./PI,50)
+        
+        !Solar ecliptic longitude
+        call writescalar(140,lambm*180./PI,51)
+        
+        !Solar declination
+        call writescalar(140,zdecl*180./PI,52)
+        
+        !Solar distance modulus
+        call writescalar(140,1.0/sqrt(eccf),53)
+        
+      
+      return
+      end
+      
+!     =====================
 !     SUBROUTINE HCADENCEGP
 !     =====================
 
@@ -1945,6 +2073,34 @@
             
       return
       end
+         
+!     =====================
+!     SUBROUTINE HCADENCESC
+!     =====================
+!     !Output scalars of interest
+
+      subroutine hcadencesc(kunit)
+      use pumamod
+      use radmod
+      
+      integer, intent(in) :: kunit
+      
+        !True anomaly
+        call writescalar(kunit,orbnu*180./PI,50)
+        
+        !Solar ecliptic longitude
+        call writescalar(kunit,lambm*180./PI,51)
+        
+        !Solar declination
+        call writescalar(kunit,zdecl*180./PI,52)
+        
+        !Solar distance modulus
+        call writescalar(kunit,1.0/sqrt(eccf),53)
+        
+      
+      return
+      end
+      
       
 !     ==================
 !     SUBROUTINE SNAPSHOTDIAG
@@ -2214,6 +2370,10 @@
       tempmin(:) = 1.0e3
       
       if (nlowio > 0) then
+        aorbnu = 0.
+        alambm = 0.
+        azdecl = 0.
+        ardist = 0.
       
         aaso(:)  = 0.
         aasp(:)  = 0.
@@ -2327,6 +2487,11 @@
       azmuz(:) = azmuz(:)+gmu0(:)
 
       if (nlowio > 0) then
+      
+        aorbnu = aorbnu + orbnu
+        alambm = alambm + lambm
+        azdecl = azdecl + zdecl
+        ardist = ardist + 1.0/sqrt(eccf)
       
         aaso(:) = aaso(:) + so(:)        
         aasp(:) = aasp(:) + sp(:)
