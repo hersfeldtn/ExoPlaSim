@@ -2304,6 +2304,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       write(nud,20030) datch,title,zf
       
 20030 format('>>>   * ',a18,2x,a30,' = ',f7.3,10x,'*') 
+      end
       
 !     ================
 !     SUBROUTINE XSECT
@@ -2314,10 +2315,14 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       use radmod
       character(len=30) title
 
-      call wrorb(orbnu*180./PI,'True Anomaly [deg]')
-      call wrorb(zdecl*180./PI,'Solar Declination [deg]')
-      call wrorb(lambm*180./PI,'Ecliptic Longitude [deg]')
-      call wrorb(eccf,'Distance Modulus')
+      title = 'True Anomaly [deg]'
+      call wrorb(orbnu*180./PI,title)
+      title = 'Solar Declination [deg]'
+      call wrorb(zdecl*180./PI,title)
+      title = 'Ecliptic Longitude [deg]'
+      call wrorb(lambm*180./PI,title)
+      title = 'Distance Modulus'
+      call wrorb(eccf,title)
       scale = 10.0
       title = 'Zonal Wind [0.1 m/s]'
       call wrzs(csu,title,scale)
