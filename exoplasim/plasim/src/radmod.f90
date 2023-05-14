@@ -2336,6 +2336,7 @@
       real :: lamb         ! True anomaly - longitude of vernal equinox
       real thyng
       real anomarg
+      real invrho
       !Outputs
       real :: trueanomaly  ! True anomaly in radians
       real :: zdecl        ! Solar declination in radians
@@ -2346,7 +2347,7 @@
           eccf = 1.
       else
           meanomaly = yearfraction*TWOPI + meananom0r
-          if (meananomaly > TWOPI) meananomaly = meananomaly - TWOPI
+          if (meananomaly > TWOPI) meananomaly = MOD(meananomaly,TWOPI)
           
           if (eccen > 0.) then
               call newtonraphson(meananomaly,eccen,eccenanomaly)
@@ -2361,13 +2362,14 @@
               
               trueanomaly = mod(trueanomaly,TWOPI)
               
-              eccf = 1 - eccen*cos(eccenanomaly)
+              invrho = 1./(1 - eccen*cos(eccenanomaly))
+              eccf = invrho*invrho
           else  !For a circular orbit we don't need to do all that calculation
               trueanomaly = meananomaly
               eccf = 1.
           endif
       endif
-      lamb = mvelpp - trueanomaly
+      lamb = MOD(mvelpp+trueanomaly, TWOPI)
       zdecl  = asin(sin(obliqr)*sin(lamb))
       
       return
