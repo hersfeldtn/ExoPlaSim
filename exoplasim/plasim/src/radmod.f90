@@ -2391,6 +2391,7 @@
       real eccen
       real ee
       real e0
+      real thyng
       integer ict
       logical thresh
       
@@ -2405,7 +2406,9 @@
       
       do while (thresh .neqv. .true.)
         e0 = ee
-        ee = ee - (ee-(meananom+eccen*sin(ee)))/(1-eccen*cos(ee))
+        thyng = 1-eccen*cos(ee)
+        if (thyng .lt. 1.0e-15) thyng=1.0e-15
+        ee = ee - (ee-(meananom+eccen*sin(ee)))/thyng
         if (abs(ee-e0) .le. 1.0e-14) thresh = .true.
         ict = ict + 1
         if (ict .gt. 100.0) thresh = .true.
