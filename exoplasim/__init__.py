@@ -1591,18 +1591,19 @@ class Model(object):
 
         return atm,output
         
-    
     def inspect(self,variable,year=-1,ignoreNaNs=True,snapshot=False,
                 highcadence=False,savg=False,tavg=False,layer=None):
-        """Return a given output variable from a given year, with optional averaging parameters.
+        """Return a given output variable from a given year or list of years, with optional averaging parameters.
 
         Parameters
         ----------
         variable : str
             The name of the variable to return.
-        year : int, optional
+        year : int, optional OR array-like
             Which year of output to return. Year indexing follows Pythonic rules. If the model
-            has been finalized, only the final year of output will be returned.
+            has been finalized, only the final year of output will be returned. If year is 
+            an array-like with length>1, the years implied by the list will be concatenated into
+            a single output, along the time axis.
         ignoreNaNs : bool, optional
             True/False. If True, use NaN-tolerant numpy functions.
         snapshot : bool, optional
@@ -1636,15 +1637,30 @@ class Model(object):
             meanop = np.nanmean
         else:
             meanop = np.mean
-        
-        if year<0:
+            
+        if type(year)!=int:
+            year = np.array(year)
+            year[year<0] += self.currentyear #Takes care of negative year indices
+            domulti=True
+        else:
+            domulti=False
+            if year<0:
             #nfiles = len(glob.glob(self.workdir+"/"+pattern+"*%s"%self.extension))
             #year = nfiles+year
-            year += self.currentyear #year=-1 should give the most recent year
+                year += self.currentyear #year=-1 should give the most recent year
     
-        ncd = self.get(year,snapshot=snapshot,highcadence=highcadence)
         
-        var = ncd.variables[variable][:]
+        if not domulti:
+            ncd = self.get(year,snapshot=snapshot,highcadence=highcadence)
+            
+            var = ncd.variables[variable][:]
+        else:
+            ncd = self.get(year[0],snapshot=snapshot,highcadence=highcadence)
+            var = ncd.variables[variable][:]
+            
+            for kyear in range(1,len(year)):
+                ncd = self.get(year[kyear],snapshot=snapshot,highcadence=highcadence)
+                var = np.append(var,ncd.variables[variable][:],axis=0) #Concatenate along time axis
         
         if variable!="lat" and variable!="lon" and variable!="lev" and variable!="time":
             lon = ncd.variables['lon'][:]

@@ -648,8 +648,9 @@ def spatialmath(variable,lat=None,lon=None,file=None,mean=True,time=None,
         Path to a NetCDF output file to open and extract data from.
     mean : bool, optional
         If True, compute a global mean. If False, compute a global sum.
-    time : int, optional
-        The time index on which to slice. If unspecified, a time average will be returned.
+    time : int, optional, or "all"
+        The time index on which to slice. If unspecified, a time average will be returned. If set to 
+        "all", the time axis will be preserved.
     ignoreNaNs : bool, optional
         If True, use NaN-safe numpy operators.
     lev : int, optional
@@ -678,34 +679,71 @@ def spatialmath(variable,lat=None,lon=None,file=None,mean=True,time=None,
             raise DimensionError("Need to provide latitude and longitude data")
         ln=lon
         lt=lat
-    variable = make2d(variable,time=time,lev=lev,ignoreNaNs=ignoreNaNs,longitudes=ln,latitudes=lt)
-    
-    lt1 = np.zeros(len(lt)+1)
-    lt1[0] = 90
-    for n in range(0,len(lt)-1):
-        lt1[n+1] = 0.5*(lt[n]+lt[n+1])
-    lt1[-1] = -90
-    dln = np.diff(ln)[0]
-    ln1 = np.zeros(len(ln)+1)
-    ln1[0] = -dln
-    for n in range(0,len(ln)-1):
-        ln1[n+1] = 0.5*(ln[n]+ln[n+1])
-    ln1[-1] = 360.0-dln
-    
-    lt1*=np.pi/180.0
-    ln1*=np.pi/180.0
-    
-    darea = np.zeros((len(lt),len(ln)))
-    for jlat in range(0,len(lt)):
-        for jlon in range(0,len(ln)):
-            dln = ln1[jlon+1]-ln1[jlon]
-            darea[jlat,jlon] = abs(np.sin(lt1[jlat])-np.sin(lt1[jlat+1]))*abs(dln)
-    
-    svar = variable*darea
-    if mean:
-        outvar = sumop(svar)/sumop(darea)
+        
+    if time!="all":
+        variable = make2d(variable,time=time,lev=lev,ignoreNaNs=ignoreNaNs,longitudes=ln,latitudes=lt)
+        
+        lt1 = np.zeros(len(lt)+1)
+        lt1[0] = 90
+        for n in range(0,len(lt)-1):
+            lt1[n+1] = 0.5*(lt[n]+lt[n+1])
+        lt1[-1] = -90
+        dln = np.diff(ln)[0]
+        ln1 = np.zeros(len(ln)+1)
+        ln1[0] = -dln
+        for n in range(0,len(ln)-1):
+            ln1[n+1] = 0.5*(ln[n]+ln[n+1])
+        ln1[-1] = 360.0-dln
+        
+        lt1*=np.pi/180.0
+        ln1*=np.pi/180.0
+        
+        darea = np.zeros((len(lt),len(ln)))
+        for jlat in range(0,len(lt)):
+            for jlon in range(0,len(ln)):
+                dln = ln1[jlon+1]-ln1[jlon]
+                darea[jlat,jlon] = abs(np.sin(lt1[jlat])-np.sin(lt1[jlat+1]))*abs(dln)
+        
+        svar = variable*darea
+        if mean:
+            outvar = sumop(svar)/sumop(darea)
+        else:
+            outvar = sumop(svar) * radius**2
     else:
-        outvar = sumop(svar) * radius**2
+        ntimes = variable.shape[1]
+        variable_ = make2d(variable,time=0,lev=lev,ignoreNaNs=ignoreNaNs,longitudes=ln,latitudes=lt)
+        outvariable = np.zeros([ntimes,]+list(variable_.shape))
+        outvariable[0,...] = variable_[:]
+        for n in range(1,ntimes):
+            outvariable[n,...] = make2d(variable,time=n,lev=lev,ignoreNaNs=ignoreNaNs,
+                                        longitudes=ln,latitudes=lt)
+        
+        lt1 = np.zeros(len(lt)+1)
+        lt1[0] = 90
+        for n in range(0,len(lt)-1):
+            lt1[n+1] = 0.5*(lt[n]+lt[n+1])
+        lt1[-1] = -90
+        dln = np.diff(ln)[0]
+        ln1 = np.zeros(len(ln)+1)
+        ln1[0] = -dln
+        for n in range(0,len(ln)-1):
+            ln1[n+1] = 0.5*(ln[n]+ln[n+1])
+        ln1[-1] = 360.0-dln
+        
+        lt1*=np.pi/180.0
+        ln1*=np.pi/180.0
+        
+        darea = np.zeros((len(lt),len(ln)))
+        for jlat in range(0,len(lt)):
+            for jlon in range(0,len(ln)):
+                dln = ln1[jlon+1]-ln1[jlon]
+                darea[jlat,jlon] = abs(np.sin(lt1[jlat])-np.sin(lt1[jlat+1]))*abs(dln)
+        
+        svar = outvariable*darea[np.newaxis,:,:]
+        if mean:
+            outvar = sumop(svar)/sumop(darea)
+        else:
+            outvar = sumop(svar) * radius**2
     
     return outvar
 
