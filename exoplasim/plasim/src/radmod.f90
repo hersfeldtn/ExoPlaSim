@@ -112,7 +112,7 @@
 !
       integer, parameter :: ORB_UNDEF_INT  = 2000000000  
       real :: obliqr   ! Earth's obliquity in radians
-      real :: meananom0r ! Initial mean anomaly in radians
+      real :: meananom0r = 0.0 ! Initial mean anomaly in radians
       real :: lambm0   ! Mean longitude of perihelion at the
                        ! vernal equinox (radians)
       real :: mvelpp   ! Earth's moving vernal equinox longitude
@@ -1340,6 +1340,7 @@
       if (ngenkeplerian == 0) then
           call orb_decl(zcday, eccen, mvelpp, lambm0, obliqr, orbnu, lambm, zdecl, eccf)
       else
+!           write(6,*) meananom0r
           call gen_orb_decl(zcday, eccen, obliqr, mvelpp, orbnu, lambm, zdecl, eccf)
       endif
       zcdayf = zcday
@@ -2350,8 +2351,18 @@
           trueanomaly = 0.
           eccf = 1.
       else
-          meanomaly = yearfraction*TWOPI + meananom0r
-          if (meananomaly > TWOPI) meananomaly = MOD(meananomaly,TWOPI)
+!           write(6,*) yearfraction
+!           write(6,*) TWOPI
+!           write(6,*) meananom0r
+          meananomaly = yearfraction*TWOPI + meananom0r
+!           write(6,*) meananomaly
+          do while (meananomaly > TWOPI)
+              meananomaly = meananomaly - TWOPI
+          enddo
+          do while (meananomaly < 0)
+              meananomaly = meananomaly + TWOPI
+          enddo
+!           write(6,*) meananomaly
           
           if (eccen > 0.) then
               call newtonraphson(meananomaly,eccen,eccenanomaly)
@@ -2401,11 +2412,14 @@
         ee = PI !prevents crazy excursions due to divide-by-zero
       endif
       
+      write(6,*) ee
+      
       ict = 0
       thresh = .false.
       
       do while (thresh .neqv. .true.)
         e0 = ee
+        write(6,*) ee
         thyng = 1-eccen*cos(ee)
         if (thyng .lt. 1.0e-15) thyng=1.0e-15
         ee = ee - (ee-(meananom+eccen*sin(ee)))/thyng
