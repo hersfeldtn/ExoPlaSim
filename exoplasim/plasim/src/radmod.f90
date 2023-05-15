@@ -121,6 +121,7 @@
       real :: orbnu=0. ! Earth true anomaly in radians.
       real :: lambm=0. ! Solar ecliptic longitude in radians
       real :: zcdayf=0. ! Fractional day
+      real :: zdeclf=0. !Declination angle
       integer :: iyrad ! Year AD to calculate orbit for
       logical, parameter :: log_print = .true.
                        ! Flag to print-out status information or not.
@@ -1344,6 +1345,7 @@
           call gen_orb_decl(zcday, eccen, obliqr, mvelpp, orbnu, lambm, zdecl, eccf)
       endif
       zcdayf = zcday
+      zdeclf = zdecl
 !
 !**   3) compute zenith angle
 !
@@ -2412,14 +2414,14 @@
         ee = PI !prevents crazy excursions due to divide-by-zero
       endif
       
-      write(6,*) ee
+!       write(6,*) ee
       
       ict = 0
       thresh = .false.
       
       do while (thresh .neqv. .true.)
         e0 = ee
-        write(6,*) ee
+!         write(6,*) ee
         thyng = 1-eccen*cos(ee)
         if (thyng .lt. 1.0e-15) thyng=1.0e-15
         ee = ee - (ee-(meananom+eccen*sin(ee)))/thyng

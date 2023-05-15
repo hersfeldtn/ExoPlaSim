@@ -244,7 +244,7 @@
         call writescalar(40,lambm*180./PI,51)
         
         !Solar declination
-        call writescalar(40,zdecl*180./PI,52)
+        call writescalar(40,zdeclf*180./PI,52)
         
         !Solar distance modulus
         call writescalar(40,1.0/sqrt(eccf),53)
@@ -1673,7 +1673,7 @@
         call writescalar(140,lambm*180./PI,51)
         
         !Solar declination
-        call writescalar(140,zdecl*180./PI,52)
+        call writescalar(140,zdeclf*180./PI,52)
         
         !Solar distance modulus
         call writescalar(140,1.0/sqrt(eccf),53)
@@ -2092,7 +2092,7 @@
         call writescalar(kunit,lambm*180./PI,51)
         
         !Solar declination
-        call writescalar(kunit,zdecl*180./PI,52)
+        call writescalar(kunit,zdeclf*180./PI,52)
         
         !Solar distance modulus
         call writescalar(kunit,1.0/sqrt(eccf),53)
@@ -2490,7 +2490,7 @@
       
         aorbnu = aorbnu + orbnu
         alambm = alambm + lambm
-        azdecl = azdecl + zdecl
+        azdecl = azdecl + zdeclf
         ardist = ardist + 1.0/sqrt(eccf)
       
         aaso(:) = aaso(:) + so(:)        

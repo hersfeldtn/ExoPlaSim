@@ -2320,7 +2320,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       title = 'True Anomaly [deg]'
       call wrorb(orbnu*180./PI,title)
       title = 'Solar Declination [deg]'
-      call wrorb(zdecl*180./PI,title)
+      call wrorb(zdeclf*180./PI,title)
       title = 'Ecliptic Longitude [deg]'
       call wrorb(lambm*180./PI,title)
       title = 'Distance Modulus'
