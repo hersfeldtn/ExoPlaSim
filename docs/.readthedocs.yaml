@@ -32,4 +32,4 @@ python:
    - method: pip
      path: .
      extra_requirements:
-     - Jinja2<3.1
+     - Jinja2<"3.1"
