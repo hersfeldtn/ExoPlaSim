@@ -1,6 +1,14 @@
 exoplasim package
 =================
 
+Module contents
+---------------
+
+.. automodule:: exoplasim
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   
 Submodules
 ----------
 
@@ -39,10 +47,12 @@ exoplasim.makestellarspec module
    :undoc-members:
    :show-inheritance:   
    
-Module contents
----------------
 
-.. automodule:: exoplasim
+exoplasim.pRT module
+--------------------
+
+.. automodule:: exoplasim.pRT
    :members:
    :undoc-members:
-   :show-inheritance:
+   :show-inheritance:   
+   
