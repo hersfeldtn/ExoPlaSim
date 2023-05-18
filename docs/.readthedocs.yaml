@@ -10,10 +10,9 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.9"
-    # You can also specify other tool versions:
-    # nodejs: "19"
-    # rust: "1.64"
-    # golang: "1.19"
+  jobs:
+    pre_install:
+    - pip install numpy>=1.16,<1.22 matplotlib scipy
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
@@ -29,3 +28,4 @@ formats:
 python:
    install:
    - requirements: docs/requirements.txt
+   
