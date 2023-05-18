@@ -16,6 +16,10 @@ import exoplasim.makestellarspec
 import exoplasim.surfacespecs
 import exoplasim.constants
 from exoplasim.constants import *
+try:
+  import exoplasim.pRT
+except:
+  pass
 import platform
 
 gases_default = {'pH2': 0.0,
