@@ -29,3 +29,7 @@ formats:
 python:
    install:
    - requirements: docs/requirements.txt
+   - method: pip
+     path: .
+     extra_requirements:
+     - Jinja2<3.1
