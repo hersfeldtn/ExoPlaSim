@@ -53,6 +53,8 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
                     'preinit.py']
 
+#Modules that cannot be imported at build time
+autodoc_mock_imports = ["petitRADTRANS",]
 
 # -- Options for HTML output -------------------------------------------------
 
