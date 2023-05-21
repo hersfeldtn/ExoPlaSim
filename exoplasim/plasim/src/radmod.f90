@@ -2783,7 +2783,7 @@
            end if
           end if
           stop 999
-         else if ((ngenkeplerian==1) .and. ((eccen.lt.0).or.(eccen.ge.1)) then
+         else if ((ngenkeplerian==1) .and. ((eccen.lt.0).or.(eccen.ge.1))) then
           if ( log_print ) then
            if(mypid==nroot) then
             write(nud,*) '(orb_params): Input eccentricity unreasonable: '&
