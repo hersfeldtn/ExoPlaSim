@@ -73,6 +73,14 @@ Optional Requirements
 * netCDF4 (for netCDF support)
 * h5py (for HDF5 support)
 
+**New in 3.2:**
+---------------
+
+* Experimental integration with petitRADTRANS to compute transit spectra and reflectance spectra, including maps and true-colour images (use at your own risk)
+* Ability to specify general keplerian orbits, with high eccentricity, using a revamped orbit code for higher accuracy
+* Orbital elements now included in standard output
+* Numerous bugfixes
+
 **New in 3.0:**
 ---------------
 
