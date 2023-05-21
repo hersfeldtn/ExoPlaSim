@@ -30,4 +30,5 @@ formats:
 python:
    install:
    - requirements: docs/requirements.txt
+   pip_install: true
    
