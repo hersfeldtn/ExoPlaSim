@@ -120,6 +120,7 @@
       real :: eccf=0.  ! Earth-sun distance factor ( i.e. (1/r)**2 )
       real :: orbnu=0. ! Earth true anomaly in radians.
       real :: lambm=0. ! Solar ecliptic longitude in radians
+      real :: rasc=0.  ! Solar right ascension in radians
       real :: zcdayf=0. ! Fractional day
       real :: zdeclf=0. !Declination angle
       integer :: iyrad ! Year AD to calculate orbit for
@@ -1339,10 +1340,10 @@
 !**   2) compute declination [radians]
 !
       if (ngenkeplerian == 0) then
-          call orb_decl(zcday, eccen, mvelpp, lambm0, obliqr, orbnu, lambm, zdecl, eccf)
+          call orb_decl(zcday, eccen, mvelpp, lambm0, obliqr, orbnu, lambm, rasc, zdecl, eccf)
       else
 !           write(6,*) meananom0r
-          call gen_orb_decl(zcday, eccen, obliqr, mvelpp, orbnu, lambm, zdecl, eccf)
+          call gen_orb_decl(zcday, eccen, obliqr, mvelpp, orbnu, lambm, rasc, zdecl, eccf)
       endif
       zcdayf = zcday
       zdeclf = zdecl
@@ -1369,7 +1370,7 @@
         do jlon = 0 , NLON-1
          jhor = jhor + 1
          zhangle = zmins * zrtim + jlon * zrlon - PI
-         if (ngenkeplerian==1) zhangle = zhangle - orbnu
+         if (ngenkeplerian==1) zhangle = zhangle - rasc
          if (zhangle < -PI) zhangle = zhangle + TWOPI
          if (zhangle > PI) zhangle = zhangle - TWOPI
          
@@ -2329,7 +2330,7 @@
 !     compute the declination and true anomaly. This uses a Newton-Raphson iterator and
 !     will work with reasonable accuracy for any bound orbit (eccen<1.0).
 
-      subroutine gen_orb_decl(yearfraction, eccen, obliqr, mvelpp, trueanomaly, lamb, zdecl, eccf)
+      subroutine gen_orb_decl(yearfraction, eccen, obliqr, mvelpp, trueanomaly, lamb, rasc, zdecl, eccf)
       use radmod, only : TWOPI, meananom0r, nfixed
       !Inputs
       real :: eccen        ! Eccentricity
@@ -2348,6 +2349,7 @@
       real :: zdecl        ! Solar declination in radians
       real :: eccf         ! Eccentricity factor for insolation
       real :: lamb         ! True anomaly - longitude of vernal equinox
+      real :: rasc         ! Right ascension
       
       if (nfixed > 0) then
           trueanomaly = 0.
@@ -2388,6 +2390,7 @@
       endif
       lamb = MOD(mvelpp+trueanomaly, TWOPI)
       zdecl  = asin(sin(obliqr)*sin(lamb))
+      rasc = atan2(cos(obliqr)*sin(lamb),cos(lamb))
       
       return
       end subroutine gen_orb_decl
@@ -2474,8 +2477,8 @@
           implicit none
           real, parameter :: ORB_ECCEN_MIN  =   0.0                ! minimum value for eccen
           real, parameter :: ORB_ECCEN_MAX  =   0.1                ! maximum value for eccen
-          real, parameter :: ORB_OBLIQ_MIN  = -90.0                ! minimum value for obliq
-          real, parameter :: ORB_OBLIQ_MAX  = +90.0                ! maximum value for obliq
+          real, parameter :: ORB_OBLIQ_MIN  = -180.0                ! minimum value for obliq
+          real, parameter :: ORB_OBLIQ_MAX  = +180.0                ! maximum value for obliq
           real, parameter :: ORB_MVELP_MIN  =   0.0                ! minimum value for mvelp
           real, parameter :: ORB_MVELP_MAX  = 360.0                ! maximum value for mvelp
           real, parameter :: ORB_UNDEF_REAL = 1.e36                ! undefined/unset/invalid value
@@ -2780,6 +2783,14 @@
            end if
           end if
           stop 999
+         else if ((ngenkeplerian==1) .and. ((eccen.lt.0).or.(eccen.ge.1)) then
+          if ( log_print ) then
+           if(mypid==nroot) then
+            write(nud,*) '(orb_params): Input eccentricity unreasonable: '&
+     &                 ,eccen
+           end if
+          end if
+          stop 999
          end if
          if( (mvelp.lt.ORB_MVELP_MIN).or.(mvelp.gt.ORB_MVELP_MAX) ) then
           if ( log_print ) then
@@ -2980,7 +2991,7 @@
 !     SUBROUTINE ORB_DECL
 !     ===================
 
-      subroutine orb_decl(calday,eccen,mvelpp,lambm0,obliqr,tnu,lamb,delta,eccf)
+      subroutine orb_decl(calday,eccen,mvelpp,lambm0,obliqr,tnu,lamb,rasc,delta,eccf)
       use pumamod, only: mcal_days_per_year,ndatim
 !
 !     Compute earth/orbit parameters using formula suggested by
@@ -3020,6 +3031,7 @@
       real :: lmm     ! Intermediate argument involving lambm
       real :: invrho  ! Inverse normalized sun/earth distance
       real :: sinl    ! Sine of lmm
+      real :: rasc         ! Right ascension
 !
 ! Compute eccentricity factor and solar declination using
 ! day value where a round day (such as 213.0) refers to 0z at
@@ -3065,6 +3077,7 @@
       delta  = asin(sin(obliqr)*sin(lamb))
       eccf   = invrho*invrho
       tnu = MOD(lamb - mvelpp, 2*pie)
+      rasc = atan2(cos(obliqr)*sin(lamb),cos(lamb))
 !
       return
       end subroutine orb_decl

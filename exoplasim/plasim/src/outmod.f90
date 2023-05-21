@@ -249,6 +249,9 @@
         !Solar distance modulus
         call writescalar(40,1.0/sqrt(eccf),53)
         
+        !Solar right ascension
+        call writescalar(40,rasc*180./PI,54)
+        
       else !low IO mode
         !True anomaly
         aorbnu = aorbnu/real(max(1,naccuout))
@@ -265,6 +268,10 @@
         !Solar distance modulus
         ardist = ardist/real(max(1,naccuout))
         call writescalar(40,ardist,53)
+        
+        !Solar right ascension
+        arasc = arasc/real(max(1,naccuout))
+        call writescalar(40,rasc*180./PI,54)
       endif
       
       return
@@ -1678,6 +1685,8 @@
         !Solar distance modulus
         call writescalar(140,1.0/sqrt(eccf),53)
         
+        !Solar right ascension
+        call writescalar(140,rasc*180./PI,54)
       
       return
       end
@@ -2097,6 +2106,9 @@
         !Solar distance modulus
         call writescalar(kunit,1.0/sqrt(eccf),53)
         
+        !Solar right ascension
+        call writescalar(kunit,rasc*180./PI,54)
+        
       
       return
       end
@@ -2374,6 +2386,7 @@
         alambm = 0.
         azdecl = 0.
         ardist = 0.
+        arasc = 0.
       
         aaso(:)  = 0.
         aasp(:)  = 0.
@@ -2492,6 +2505,7 @@
         alambm = alambm + lambm
         azdecl = azdecl + zdeclf
         ardist = ardist + 1.0/sqrt(eccf)
+        arasc = arasc + rasc
       
         aaso(:) = aaso(:) + so(:)        
         aasp(:) = aasp(:) + sp(:)

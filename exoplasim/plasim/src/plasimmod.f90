@@ -490,6 +490,7 @@
 !
       real :: aorbnu = 0. !Accumulated true anomaly
       real :: alambm = 0. !Accumulated solar ecliptic longitude
+      real :: arasc  = 0. !Accumualted solar right ascension
       real :: azdecl = 0. !Accumualted solar declination angle
       real :: ardist = 0. !Accumulated solar distance modulus
 

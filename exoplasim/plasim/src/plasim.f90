@@ -2323,6 +2323,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call wrorb(zdeclf*180./PI,title)
       title = 'Ecliptic Longitude [deg]'
       call wrorb(lambm*180./PI,title)
+      title = 'Right Ascension'
+      call wrorb(rasc*180./PI,title)
       title = 'Distance Modulus'
       call wrorb(eccf,title)
       scale = 10.0
