@@ -710,7 +710,7 @@ def spatialmath(variable,lat=None,lon=None,file=None,mean=True,time=None,
         else:
             outvar = sumop(svar) * radius**2
     else:
-        ntimes = variable.shape[1]
+        ntimes = variable.shape[0]
         variable_ = make2d(variable,time=0,lev=lev,ignoreNaNs=ignoreNaNs,longitudes=ln,latitudes=lt)
         outvariable = np.zeros([ntimes,]+list(variable_.shape))
         outvariable[0,...] = variable_[:]
@@ -740,10 +740,11 @@ def spatialmath(variable,lat=None,lon=None,file=None,mean=True,time=None,
                 darea[jlat,jlon] = abs(np.sin(lt1[jlat])-np.sin(lt1[jlat+1]))*abs(dln)
         
         svar = outvariable*darea[np.newaxis,:,:]
+        svar = np.reshape(svar,[ntimes,np.prod(variable_.shape)])
         if mean:
-            outvar = sumop(svar)/sumop(darea)
+            outvar = sumop(svar,axis=1)/sumop(darea)
         else:
-            outvar = sumop(svar) * radius**2
+            outvar = sumop(svar,axis=1) * radius**2
     
     return outvar
 
