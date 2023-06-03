@@ -132,8 +132,8 @@ source code, and compile the ``pyfft`` library.
 **NEW in 3.2.2:** If you need to re-run the configuration, because
 for example the system libraries/compilers have changed, or the
 configuration failed the first time (usually because OpenMPI
-was not properly configured/visible, and/or numpy's `f2py` utility
-was not properly available), then you can call `exoplasim.sysconfigure()`
+was not properly configured/visible, and/or numpy's ``f2py`` utility
+was not properly available), then you can call :py:mod:`sysconfigure() <exoplasim.sysconfigure>`
 to rerun the configuration script.
 
 You may also configure and compile the model manually if you wish
@@ -218,21 +218,21 @@ or a problem with how **your model** is configured.
 **If it appears that a file is missing or a command can't be found:**
 
 This usually means a system library such as the Fortran compiler,
-OpenMPI compiler, or numpy's `f2py` utility is either not installed,
+OpenMPI compiler, or numpy's ``f2py`` utility is either not installed,
 incorrectly installed, or not visible to ExoPlaSim. To verify, you can
-run `exoplasim.printsysconfig(ncpus=1)` and `exoplasim.printsysconfig(ncpus=2)`.
+run :py:mod:`exoplasim.printsysconfig(ncpus=1) <exoplasim.printsysconfig>` and ``exoplasim.printsysconfig(ncpus=2)``.
 These commands (**new in 3.2.2**) print the contents of the single-core 
 and parallel executation configuration files, and additionally return their
 contents as a python dictionary. There should not be any empty settings.
 
 If something appears missing such as an MPI or Fortran compiler, and you
-believe it's installed, you can check by running e.g. `mpifort --help`
-or `gfortran --help`. Additionally, for `pyfft` problems, verify that numpy's
-`f2py` utility is available by running `f2py -h` or `f2py3 -h`. If any of these
+believe it's installed, you can check by running e.g. ``mpifort --help``
+or ``gfortran --help``. Additionally, for ``pyfft`` problems, verify that numpy's
+``f2py`` utility is available by running ``f2py -h`` or ``f2py3 -h``. If any of these
 fails but the library in question is installed, that suggests it is not in
 the system path (the list of directories where programs may look for libraries
 and executables). Ensure all libraries are properly installed, configured,
-and on the path, then run `exoplasim.sysconfigure()` to reconfigure ExoPlaSim.
+and on the path, then run :py:mod:`sysconfigure() <exoplasim.sysconfigure>` to reconfigure ExoPlaSim.
 
 **If it appears that the model has actually crashed:**
 
