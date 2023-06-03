@@ -129,6 +129,13 @@ source code, and compile the ``pyfft`` library.
 .. use of features anachronistic to a particular version of NetCDF
 .. that no longer exists.
 
+**NEW in 3.2.2:** If you need to re-run the configuration, because
+for example the system libraries/compilers have changed, or the
+configuration failed the first time (usually because OpenMPI
+was not properly configured/visible, and/or numpy's `f2py` utility
+was not properly available), then you can call `exoplasim.sysconfigure()`
+to rerun the configuration script.
+
 You may also configure and compile the model manually if you wish
 to not use the Python API, by entering the exoplasim/ directory
 and running first configure.sh, then compile.sh (compilation flags
@@ -204,7 +211,32 @@ If ExoPlaSim crashed almost immediately without producing output
 .. py:module:: exoplasim.makestellarspec
 
 If things crashed and burned immediately, it's likely a configuration
-problem. Check to make sure you aren't using a restart file from a run
+problem. There are two kinds of configuration problems that can commonly
+cause problems: a problem with how **system libraries** are configured,
+or a problem with how **your model** is configured.
+
+**If it appears that a file is missing or a command can't be found:**
+
+This usually means a system library such as the Fortran compiler,
+OpenMPI compiler, or numpy's `f2py` utility is either not installed,
+incorrectly installed, or not visible to ExoPlaSim. To verify, you can
+run `exoplasim.printsysconfig(ncpus=1)` and `exoplasim.printsysconfig(ncpus=2)`.
+These commands (**new in 3.2.2**) print the contents of the single-core 
+and parallel executation configuration files, and additionally return their
+contents as a python dictionary. There should not be any empty settings.
+
+If something appears missing such as an MPI or Fortran compiler, and you
+believe it's installed, you can check by running e.g. `mpifort --help`
+or `gfortran --help`. Additionally, for `pyfft` problems, verify that numpy's
+`f2py` utility is available by running `f2py -h` or `f2py3 -h`. If any of these
+fails but the library in question is installed, that suggests it is not in
+the system path (the list of directories where programs may look for libraries
+and executables). Ensure all libraries are properly installed, configured,
+and on the path, then run `exoplasim.sysconfigure()` to reconfigure ExoPlaSim.
+
+**If it appears that the model has actually crashed:**
+
+Check to make sure you aren't using a restart file from a run
 that used a different resolution, or stellar spectrum files that aren't
 formatted correctly (use the :py:mod:`makestellarspec <exoplasim.makestellarspec>`
 utility to format Phoenix spectra for ExoPlaSim), or boundary condition

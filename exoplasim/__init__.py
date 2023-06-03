@@ -48,6 +48,98 @@ def _noneparse(text,dtype):
             #sourcedir=spth.strip()
             
     #return sourcedir
+    
+def sysconfigure():
+    '''Rerun the ExoPlaSim system configuration script.
+    
+    If compilers/libraries have changed since you first configured ExoPlaSim,
+    or the initial configuration failed, you should call this function.
+    '''
+    
+    sourcedir = "/".join(__file__.split("/")[:-1]) #Get the absolute path for the module
+     
+    try:
+        cwd = os.getcwd()
+        os.chdir(sourcedir)
+        if float(sys.version[:3])>=3.5 and float(sys.version[:3])<3.7:
+            result = subprocess.run(["./configure.sh -v %s"%(sys.version[:3])],shell=True,check=True,
+                                    stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                                    universal_newlines=True)
+            print(result.stdout)
+            print(result.stderr)
+        elif float(sys.version[:3])>=3.7:
+            result = subprocess.run(["./configure.sh -v %s"%(sys.version[:3])],shell=True,check=True,
+                            capture_output=True,universal_newlines=True)
+            print(result.stdout)
+            print(result.stderr)
+        elif float(sys.version[:3])<3.5 and float(sys.version[:3])>=3.0:
+            os.system("./configure.sh -v %s"%(sys.version[0:3]))
+            result=""
+        else:
+            os.system("./configure.sh -v 3")
+            result=""
+        #if self.burn7:
+            #os.system("nc-config --version > ncversion.tmp")
+            #with open("ncversion.tmp","r") as ncftmpf:
+                #version = float('.'.join(ncftmpf.read().split()[1].split('.')[:2]))
+            #if version>4.2:
+                #os.system("cd postprocessor && ./build_init.sh || ./build_init_compatibility.sh")
+            #else:
+                #os.system("cd postprocessor && rm burn7.x && make")
+            #os.chdir(cwd)
+            #os.system("touch %s/postprocessor/netcdfbuilt"%sourcedir)
+        os.chdir(cwd)
+    except PermissionError:
+        raise PermissionError("\nHi! Welcome to ExoPlaSim. It looks like this is the first "+
+                            "time you're using this program since installing, and you "+
+                            "may have installed it to a location that needs root "+
+                            "privileges to modify. This is not ideal! If you want to "+
+                            "use the program this way, you will need to run python code"+
+                            " that uses ExoPlaSim with sudo privileges; i.e. sudo "+
+                            "python3 myscript.py. If you did this because pip install "+
+                            "breaks without sudo privileges, then try using \n\n\tpip "+ "install --user exoplasim \n\ninstead. It is generally a "+
+                                "very bad idea to install things with sudo pip install.")
+    except Exception as e:
+        print(result.stderr)
+        raise e
+        
+def printsysconfig(ncpus=4):
+    '''Print the system configuration file ExoPlaSim generated on its first installation.
+    
+    Parameters
+    ----------
+    ncpus : int, optional
+        Number of cores you want to use. The configuration differs for single-core vs 
+        parallel execution, so make sure you are checking the correct configuration.
+        
+    Returns
+    -------
+    dict
+        The contents of the configuration file as a dictionary
+    '''
+    
+    sourcedir = "/".join(__file__.split("/")[:-1]) #Get the absolute path for the module
+    if ncpus==1:
+        if not os.path.exists(sourcedir+"/most_compiler"):
+            raise Exception("""ExoPlaSim has not yet been configured. Please configure it by
+instantiating a Model or running exoplasim.sysconfigure().""")
+        with open(sourcedir+"/most_compiler") as f:
+            result = f.read()
+    else:
+        if not os.path.exists(sourcedir+"/most_compiler_mpi"):
+            raise Exception("""ExoPlaSim has not yet been configured. Please configure it by
+instantiating a Model or running exoplasim.sysconfigure().""")
+        with open(sourcedir+"/most_compiler_mpi") as f:
+            result = f.read()
+            
+    print(result)
+    config = {}
+    result = result.split('\n')
+    for line in result:
+        if '=' in line:
+            setting = line.split('=')
+            config[setting[0]] = setting[1]
+    return config
 
 class Model(object):
     """Create an ExoPlaSim model in a particular directory.
