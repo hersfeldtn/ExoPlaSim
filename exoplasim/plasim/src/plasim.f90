@@ -3127,7 +3127,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 !
 !     tracer transport
 !
-      if (nsela > 0 .and. nkits == 0) then	  
+      if (nsela > 0 .and. nkits == 0 .and. nqspec == 0) then	  
        if (nqspec == 0) then
         write(nud,*) 'Semi-Lagrangian q running'
         flush(nud)
