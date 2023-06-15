@@ -1817,14 +1817,14 @@
        ztemp1 = SQRT((1.0-ssa1)*(1.0-ssa1+2*bscat1*ssa1))
        ztemp2 = SQRT((1.0-ssa2)*(1.0-ssa2+2*bscat2*ssa2))
        
-       if (mypid == NROOT) then
-        write(nud,*) "Aerosol number density:",nrho
-        write(nud,*) "Aerosol optical depth 1:",aod1
-        write(nud,*) "Aerosol u-factor 1:",zaeru1
-        write(nud,*) "Aerosol temp factor 1:",ztemp1
-        write(nud,*) "Aerosol diffusivity factor:",zmu00
-        write(nud,*) "Aerosol cos of solar zenith angle:",zmu0
-       endif
+!       if (mypid == NROOT) then
+!        write(nud,*) "Aerosol number density:",nrho
+!        write(nud,*) "Aerosol optical depth 1:",aod1
+!        write(nud,*) "Aerosol u-factor 1:",zaeru1
+!        write(nud,*) "Aerosol temp factor 1:",ztemp1
+!        write(nud,*) "Aerosol diffusivity factor:",zmu00
+!        write(nud,*) "Aerosol cos of solar zenith angle:",zmu0
+!       endif
 
        do jlev=1,NLEV
         where(losun(:) .and. nrho(:,jlev) > 0.)
