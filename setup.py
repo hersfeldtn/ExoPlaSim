@@ -6,7 +6,7 @@ setup(
     version='3.2.4',
     packages=['exoplasim',],
     zip_safe=False,
-    install_requires=["numpy>=1.16,<1.22","matplotlib","scipy"],
+    install_requires=["numpy>=1.16","matplotlib","scipy"],
     extras_require = {"netCDF4": ["netCDF4"],
                       "HDF5": ["h5py"],
                       "petitRADTRANS": ["petitRADTRANS>=2.4"]},
