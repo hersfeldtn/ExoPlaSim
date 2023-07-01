@@ -62,20 +62,24 @@ def sysconfigure():
         cwd = os.getcwd()
         os.chdir(sourcedir)
         if float(sys.version[:3])>=3.5 and float(sys.version[:3])<3.7:
+            print("./configure -v %s"%(sys.version[:3]))
             result = subprocess.run(["./configure.sh -v %s"%(sys.version[:3])],shell=True,check=True,
                                     stdout=subprocess.PIPE,stderr=subprocess.PIPE,
                                     universal_newlines=True)
             print(result.stdout)
             print(result.stderr)
         elif float(sys.version[:3])>=3.7:
+            print("./configure -v %s"%(sys.version[:3]))
             result = subprocess.run(["./configure.sh -v %s"%(sys.version[:3])],shell=True,check=True,
                             capture_output=True,universal_newlines=True)
             print(result.stdout)
             print(result.stderr)
         elif float(sys.version[:3])<3.5 and float(sys.version[:3])>=3.0:
+            print("./configure -v %s"%(sys.version[:3]))
             os.system("./configure.sh -v %s"%(sys.version[0:3]))
             result=""
         else:
+            print("./configure -v 3")
             os.system("./configure.sh -v 3")
             result=""
         #if self.burn7:
@@ -307,13 +311,17 @@ class Model(object):
                 os.chdir(sourcedir)
                 os.system("touch firstrun")
                 if float(sys.version[:3])>=3.5 and float(sys.version[:3])<3.7:
+                    print("./configure.sh -v %s"%(sys.version[:3]))
                     subprocess.run(["./configure.sh -v %s"%(sys.version[:3])],shell=True,check=True)
                 elif float(sys.version[:3])>=3.7:
+                    print("./configure.sh -v %s"%(sys.version[:3]))
                     subprocess.run(["./configure.sh -v %s"%(sys.version[:3])],shell=True,check=True,
                                    capture_output=True)
                 elif float(sys.version[:3])<3.5 and float(sys.version[:3])>=3.0:
+                    print("./configure.sh -v %s"%(sys.version[0:3]))
                     os.system("./configure.sh -v %s"%(sys.version[0:3]))
                 else:
+                    print("./configure.sh -v 3")
                     os.system("./configure.sh -v 3")
                 #if self.burn7:
                     #os.system("nc-config --version > ncversion.tmp")
