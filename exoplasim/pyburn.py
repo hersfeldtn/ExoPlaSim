@@ -516,7 +516,7 @@ def refactorvariable(variable,header,nlev=10):
     dim2 = min(header[4],header[5])
     if header[1]==1:
         nlevs=nlev
-        if len(variable)%(len(variable)//(dim1*dim2*nlevs))!=0:
+        if len(variable)%(float(len(variable))/(dim1*dim2*nlevs))!=0:
             nlevs+=1
     else:
         nlevs=1
