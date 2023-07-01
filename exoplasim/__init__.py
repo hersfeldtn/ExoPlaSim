@@ -202,6 +202,9 @@ class Model(object):
     crashtolerant : bool, optional
         If True, then on a crash, ExoPlaSim will rewind 10 years and resume from there.
         If fewer than 10 years have elapsed, ExoPlaSim will simply crash.
+    outputfaulttolerant : bool, optional
+        If True, then if the postprocessing step fails, ExoPlaSim will print an error, but continue
+        on to the next model year.
         
     Returns
     -------
@@ -243,7 +246,7 @@ class Model(object):
     """
     def __init__(self,resolution="T21",layers=10,ncpus=4,precision=8,debug=False,inityear=0,
                 recompile=False,optimization=None,mars=False,workdir="most",source=None,force991=False,
-                modelname="MOST_EXP",outputtype=".npz",crashtolerant=False):
+                modelname="MOST_EXP",outputtype=".npz",crashtolerant=False,outputfaulttolerant=False):
         
         global sourcedir
         
@@ -270,6 +273,7 @@ class Model(object):
                                    "smoothweight": 0.95}
                         
         self.crashtolerant = crashtolerant
+        self.outputfaulttolerant = outputfaulttolerant
         
         if self.extension not in pyburn.SUPPORTED:
             raise Exception("Unsupported output format detected. Supported formats are:\n\t\n\t%s"%("\n\t".join(pyburn.SUPPORTED)))
@@ -544,7 +548,7 @@ class Model(object):
         
         
     def runtobalance(self,threshold = None,baseline=50,maxyears=300,minyears=75,
-                    timelimit=None,crashifbroken=True,clean=True,diagnosticvars=None,):
+                    timelimit=None,crashifbroken=True,clean=True,diagnosticvars=None):
         """ Run the model until energy balance equilibrium is reached at the top and surface.
             
         Parameters
@@ -608,6 +612,7 @@ class Model(object):
             stormname="MOST.%05d.STORM"%self.currentyear
             
             runerror = True
+            failed_postprocess = False
             
             #Run ExoPlaSim
             try:
@@ -662,7 +667,9 @@ class Model(object):
                         os.system("mv %s%s highcadence/"%(hcname,self.extension))
                 except Exception as e:
                     print(e)
-                    if self.crashtolerant:
+                    failed_postprocess=True
+                    runerror=False
+                    if self.crashtolerant or self.outputfaulttolerant:
                         raise #We actually need to get out of here before the cleanup routines kick in
                     self._crash()
                 if diagnosticvars is not None:
@@ -717,7 +724,7 @@ class Model(object):
                 
             except Exception as e:
                 if runerror:
-                    if self.crashtolerant and self.currentyear>=10:
+                    if (self.crashtolerant and self.currentyear>=10):
                         self.currentyear-=10
                         os.system("cp MOST_REST.%05d plasim_restart"%self.currentyear)
                         for n in range(self.currentyear+1,self.currentyear+10):
@@ -732,6 +739,20 @@ class Model(object):
                     else:
                         print(e)
                         self._crash() #Bring in the cleaners
+                elif self.outputfaulttolerant and failed_postprocess:
+                    print("Failed to postprocess year %d!"%self.currentyear)
+                    print(e)
+                    print("Continuing on to year %d."%(self.currentyear+1))
+                    os.system("cp MOST_REST.%05d plasim_restart"%self.currentyear)
+                    for n in range(self.currentyear+1,self.currentyear+10):
+                        os.system("rm MOST*%05d*"%n)
+                        os.system("rm snapshots/MOST*%05d*"%n)
+                        os.system("rm highcadence/MOST*%05d*"%n)
+                    os.system("rm plasim_status")
+                    os.system("rm plasim_output")
+                    os.system("rm plasim_hcadence")
+                    os.system("rm plasim_snapshot")
+                    self.currentyear+=1
                 else:
                     pass
             
@@ -893,6 +914,8 @@ class Model(object):
             snowname="MOST_SNOW.%05d"%self.currentyear
             stormname="MOST.%05d.STORM"%self.currentyear
             
+            failed_postprocess = False
+            
             #Run ExoPlaSim
             try:
                 if float(sys.version[:3])>=3.5 and float(sys.version[:3])<3.7:
@@ -935,7 +958,8 @@ class Model(object):
                                                     log="hcout"  ,crashifbroken=crashifbroken)
                             os.system("mv %s%s highcadence/"%(hcname,self.extension))
                     except Exception as e:
-                        if self.crashtolerant:
+                        failed_postprocess=True
+                        if self.crashtolerant or self.outputfaulttolerant:
                             raise
                         print(e)
                         self._crash()
@@ -966,6 +990,20 @@ class Model(object):
                 if self.crashtolerant and self.currentyear>=10:
                     print(self.currentyear,e)
                     self.currentyear-=10
+                    os.system("cp MOST_REST.%05d plasim_restart"%self.currentyear)
+                    for n in range(self.currentyear+1,self.currentyear+10):
+                        os.system("rm MOST*%05d*"%n)
+                        os.system("rm snapshots/MOST*%05d*"%n)
+                        os.system("rm highcadence/MOST*%05d*"%n)
+                    os.system("rm plasim_status")
+                    os.system("rm plasim_output")
+                    os.system("rm plasim_hcadence")
+                    os.system("rm plasim_snapshot")
+                    self.currentyear+=1
+                elif self.outputfaulttolerant and failed_postprocess:
+                    print("Failed to postprocess year %d!"%self.currentyear)
+                    print(e)
+                    print("Continuing on to year %d."%(self.currentyear+1))
                     os.system("cp MOST_REST.%05d plasim_restart"%self.currentyear)
                     for n in range(self.currentyear+1,self.currentyear+10):
                         os.system("rm MOST*%05d*"%n)
