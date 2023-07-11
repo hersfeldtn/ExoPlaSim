@@ -629,7 +629,7 @@
       if (l_aerorad == 1) then
        select case (l_source) ! Choose your aerosol source
        case(1) ! Case 1: photochemical haze
-         mmr(:,:,1,ic) = fcoeff*(abs(aerosw(:,:,1))/(maxval(abs(aerosw)) + 1.E-6)) ! At the max SW flux, the source strength is the input source
+         mmr(:,:,1,ic) = fcoeff*(abs(aerosw(:,:,1))/(maxval(abs(aerosw(:,:,1))) + 1.E-6)) ! At the max SW flux, the source strength is the input source
        case(2) ! Case 2: dust
          mmr(:,:,NLEV,ic) = fcoeff*land ! At k=surface, land grid boxes are given the abundance fcoeff (kg/kg) and sea is given 0
        end select
