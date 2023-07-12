@@ -73,6 +73,11 @@ Optional Requirements
 * netCDF4 (for netCDF support)
 * h5py (for HDF5 support)
 
+**New in 3.3:**
+---------------
+
+* New aerosol module for transport and gravitational settling of dust and photochemical hazes
+
 **New in 3.2:**
 ---------------
 

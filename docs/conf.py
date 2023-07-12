@@ -23,11 +23,11 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'ExoPlaSim'
-copyright = '2020, Adiv Paradise'
-author = 'Adiv Paradise'
+copyright = '2020, Adiv Paradise; 2023, Maureen J. Cohen'
+author = 'Adiv Paradise, Maureen J. Cohen'
 
 # The full version, including alpha/beta/rc tags
-release = '3.2.4'
+release = '3.3.0'
 
 
 # -- General configuration ---------------------------------------------------

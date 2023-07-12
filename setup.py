@@ -3,7 +3,7 @@ import os
  
 setup(
     name='exoplasim',
-    version='3.2.4',
+    version='3.3.0',
     packages=['exoplasim',],
     zip_safe=False,
     install_requires=["numpy>=1.16","matplotlib","scipy"],
@@ -26,7 +26,7 @@ setup(
                                'exoplasim/lsg',
                                'exoplasim/tools',
                                'exoplasim/plasim/run/*.sra']},
-    author='Adiv Paradise',
+    author='Adiv Paradise, Maureen J. Cohen',
     author_email='paradise.astro@gmail.com',
     license='GNU General Public License',
     license_files=["LICENSE.TXT",],
