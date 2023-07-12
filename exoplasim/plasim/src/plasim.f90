@@ -90,6 +90,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       landmod_namelist    = trim(landmod_namelist   ) // mrext
       vegmod_namelist     = trim(vegmod_namelist    ) // mrext
       seamod_namelist     = trim(seamod_namelist    ) // mrext
+      aero_namelist       = trim(aero_namelist      ) // mrext
       
       return
       end
@@ -185,7 +186,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call initpm                ! Several initializations
          call initsi                ! Initialize semi implicit scheme
          call guistart              ! Initialize GUI
-         if (nsela > 0) call tracer_ini0 ! initialize tracer data 
+         if (nsela > 0) call tracer_ini0 ! initialize tracer data
+         if (nsela > 0 .and. l_aero > 0) call aero_ini 
       endif ! (mypid == NROOT)
 
 !     ***********************
@@ -229,6 +231,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpbci(nrestart) ! 1: read restart file 0: initial run
       call mpbci(nqspec  ) ! 1: spectral q 0: grodpoint q
       call mpbci(nsela   ) ! 1: semi lagrangian advection enabled
+      call mpbci(l_aero  ) ! 1: aerosols enabled
 
       call mpbci(nstep   ) ! current timestep
       call mpbci(mstep   ) ! current timestep in month
@@ -812,6 +815,10 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call mpputgp('dq'  ,dq(1,NLEP),NHOR,1)
       else                  ! semi-langrange: save complete humidity array
          call mpputgp('dq'  ,dq,NHOR,NLEP)
+      if (l_aero > 0) then
+         call mpputgp('mmr' ,mmr,NHOR,NLEP)
+         call mpputgp('nrho',nrho,NHOR,NLEP)
+      endif
       endif
 !
 !     accumulated diagnostics
@@ -853,7 +860,9 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpputgp('aasqout'     ,aasqout ,NESP,NLEV)
       call mpputgp('aasd'        ,aasd    ,NESP,NLEV)   
       call mpputgp('aasz'        ,aasz    ,NESP,NLEV)   
-      call mpputgp('aadq'        ,aadq    ,NHOR,NLEP)   
+      call mpputgp('aadq'        ,aadq    ,NHOR,NLEP) 
+      call mpputgp('aammr'       ,aammr   ,NHOR,NLEP)
+      call mpputgp('aanrho'      ,aanrho  ,NHOR,NLEP)
       call mpputgp('aadmld'      ,aadmld  ,NHOR,1)      
       call mpputgp('aadt'        ,aadt    ,NHOR,NLEP)   
       call mpputgp('aadwatc'     ,aadwatc ,NHOR,1)     
@@ -1035,6 +1044,10 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
          call mpgetgp('dq',dq(1,NLEP),NHOR,1)
       else                  ! semi-langrange: read complete humidity array
          call mpgetgp('dq',dq,NHOR,NLEP)
+      if (l_aero > 0) then
+         call mpgetgp('mmr',mmr,NHOR,NLEP)
+         call mpgetgp('nrho',nrho,NHOR,NLEP)
+      endif
       endif
 
 !     read and scatter accumulated diagnostics
@@ -1076,7 +1089,9 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpgetgp('aasqout'     ,aasqout ,NESP,NLEV)
       call mpgetgp('aasd'        ,aasd    ,NESP,NLEV)   
       call mpgetgp('aasz'        ,aasz    ,NESP,NLEV)   
-      call mpgetgp('aadq'        ,aadq    ,NHOR,NLEP)   
+      call mpgetgp('aadq'        ,aadq    ,NHOR,NLEP)
+      call mpgetgp('aammr'       ,aammr   ,NHOR,NLEP)
+      call mpgetgp('aanrho'      ,aanrho  ,NHOR,NLEP)
       call mpgetgp('aadmld'      ,aadmld  ,NHOR,1)      
       call mpgetgp('aadt'        ,aadt    ,NHOR,NLEP)   
       call mpgetgp('aadwatc'     ,aadwatc ,NHOR,1)     
@@ -1215,7 +1230,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
                    , tdissd  , tdissz  , tdisst  , tdissq  , tgr        &
                    , psurf   , ptop    , ptop2   , taucool              &
                    , restim  , t0      , tfrc    , nstratosponge        &
-                   , sigh    , nenergy , nener3d , nsponge , dampsp
+                   , sigh    , nenergy , nener3d , nsponge , dampsp     &
+                   , l_aero
 !
 !     preset namelist parameter according to model set up
 !
@@ -3104,6 +3120,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 
       real zqout(NHOR,NLEV)
       real zgq(NLON,NLAT,NLEV)
+      real zmmr(NLON,NLAT,NLEV)
+      real znrho(NLON,NLAT,NLEV)
 !
 !*    Diabatic Gridpoint Calculations
 !
@@ -3115,6 +3133,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       dvdt(:,:)=0.
       dtdt(:,:)=0.
       dqdt(:,:)=0.
+      mmrt(:,:)=0.
 
 !
 !     transform to gridpoint domain
@@ -3144,8 +3163,10 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 !
 !     tracer transport
 !
-      if (nsela > 0 .and. nkits == 0) then
+      if (nsela > 0 .and. nkits == 0 .and. nqspec == 0) then	  
        if (nqspec == 0) then
+        write(nud,*) 'Semi-Lagrangian q running'
+        flush(nud)
         dqt(:,:) = dq(:,:) ! Save old value of q
         call mpgagp(zgq,dq,NLEV)
         if (mypid == NROOT) then
@@ -3163,10 +3184,33 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
         endif ! mypid
         call mpscgp(zgq,dq,NLEV)
         dqt(:,:) = (dq(:,:) - dqt(:,:)) / deltsec !  q advection term
-       endif ! nqspec
+       endif ! nqspec	  
       endif ! nkits
       call guihor("DQ" // char(0),dq,NLEV,1000.0,0.0)
 
+!     aerosol transport
+  
+      if (nsela == 1 .and. nkits == 0 .and. l_aero > 0) then
+        mmrt(:,:) = mmr(:,:) ! Save old value of mmr
+        call mpgagp(zmmr,mmr,NLEV)
+        call mpgagp(znrho,nrho,NLEV)
+        if (mypid == NROOT) then
+         do jlat = 1 , NLAT
+          daeros(:,NLAT+1-jlat,:,1) = zmmr(:,jlat,:)
+          numrhos(:,NLAT+1-jlat,:,1) = znrho(:,jlat,:)
+         enddo ! jlat
+        endif ! mypid
+        call aero_main
+        if (mypid == NROOT) then
+         do jlat = 1 , NLAT
+          zmmr(:,jlat,:) = daeros(:,NLAT+1-jlat,:,1)
+          znrho(:,jlat,:) = numrhos(:,NLAT+1-jlat,:,1)
+         enddo
+        endif ! mypid
+        call mpscgp(zmmr,mmr,NLEV)
+        call mpscgp(znrho,nrho,NLEV)
+        mmrt(:,:) = (mmr(:,:) - mmrt(:,:)) / deltsec !  q advection term       endif !  
+      endif ! nkits
 !
 !     compute output specific humidity
 !
@@ -3293,9 +3337,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 !     h) hurricane/storm diagnostics
 !
       
-      call hurricanestep
-      
-      
+      call hurricanestep   
 
 !
 !     END OF PARAMETERISATION ROUTINES
@@ -3390,6 +3432,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       call mpsumsc(szf,szt,NLEV)
       if (nqspec == 1) call mpsumsc(sqf,sqt,NLEV)
       if (nqspec == 0) dq(:,:) = dq(:,:) + dqdt(:,:) * deltsec
+      if (nsela == 1 .and. l_aero > 0) mmr(:,:) = mmr(:,:) + mmrt(:,:) * deltsec
 
       return
       end

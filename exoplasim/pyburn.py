@@ -7,6 +7,10 @@ import exoplasim.gcmt
 import exoplasim.gcmt as gcmt
 import exoplasim.filesupport
 from exoplasim.filesupport import SUPPORTED
+import gcmt
+import gcmt as gcmt
+import filesupport
+from filesupport import SUPPORTED
 import scipy, scipy.integrate, scipy.interpolate
 import os, sys
 
@@ -130,6 +134,7 @@ ilibrary = { "50":["nu"   ,"true_anomaly"                    ,"deg"        ],
             "279":["thetah","half_level_potential_temperature","K"         ],
             "280":["theta","full_level_potential_temperature","K"          ],
             "298":["vegf"     ,"forest_cover"                        ,"1"           ],
+            "298":["vegf"     ,"forest_cover"                        ,"1"           ],
             "299":["veglai"   ,"vegetation_leaf_area_index"          ,"nondimen"    ],
             "300":["veggpp"   ,"vegetation_gross_primary_production" ,"kg C m-2 s-1"],
             "301":["vegnpp"   ,"vegetation_net_primary_production"   ,"kg C m-2 s-1"],
@@ -157,7 +162,9 @@ ilibrary = { "50":["nu"   ,"true_anomaly"                    ,"deg"        ],
             "406":["dftu"  ,"longwave_up"                    ,"W m-2"      ],
             "407":["dftd"  ,"longwave_down"                  ,"W m-2"      ],
             "408":["dtdt"  ,"rad_heating_rate"               ,"K s-1"      ],
-            "409":["dfdz"  ,"flux_convergence"               ,"W m-3"      ]}
+            "409":["dfdz"  ,"flux_convergence"               ,"W m-3"      ],
+            "410":["mmr"   ,"aerosol_mass_mixing_ratio"      ,"kg kg-1"    ],
+            "411":["nrho"  ,"aerosol_number_density"         ,"particles m-3"]}
 
 #dictionary that can be searched by string codes
 slibrary = {}
@@ -556,6 +563,17 @@ def readfile(filename):
         Dictionary of model variables, indexed by numerical code
     '''
     
+
+    if sys.version[0]=="2":
+        if nlat in [192,320]:
+            import exoplasim.pyfft991v2 as pyfft
+        else:
+            import exoplasim.pyfft2 as pyfft
+    else:
+        if nlat in [192,320]:
+            import exoplasim.pyfft991 as pyfft
+        else:
+            import exoplasim.pyfft as pyfft
     
     with open(filename,"rb") as fb:
         fbuffer = fb.read()
@@ -582,19 +600,6 @@ def readfile(filename):
     ntru = headers['main'][7]
     ntimes = len(time)
     
-    
-    if sys.version[0]=="2":
-        if nlat in [192,320]:
-            import exoplasim.pyfft991v2 as pyfft
-        else:
-            import exoplasim.pyfft2 as pyfft
-    else:
-        if nlat in [192,320]:
-            import exoplasim.pyfft991 as pyfft
-        else:
-            import exoplasim.pyfft as pyfft
-    
-        
     sid,gwd = pyfft.inigau(nlat)
     rlat = np.arcsin(sid)
     lat = rlat*180.0/np.pi
@@ -1000,13 +1005,7 @@ def _transformvectorvar(lon,uvar,vvar,umeta,vmeta,lats,nlon,nlev,ntru,ntime,mode
         Transformed array
     '''
     
-    if np.nanmax(lats)>10: #Dealing with degrees, not radians
-        rlats = lats*np.pi/180.0
-    else:
-        rlats = lats[:]
-        
-    nlat = len(rlats)
-    
+
     if sys.version[0]=="2":
         if nlat in [192,320]:
             import exoplasim.pyfft991v2 as pyfft
@@ -1017,6 +1016,14 @@ def _transformvectorvar(lon,uvar,vvar,umeta,vmeta,lats,nlon,nlev,ntru,ntime,mode
             import exoplasim.pyfft991 as pyfft
         else:
             import exoplasim.pyfft as pyfft
+            
+    if np.nanmax(lats)>10: #Dealing with degrees, not radians
+        rlats = lats*np.pi/180.0
+    else:
+        rlats = lats[:]
+        
+    nlat = len(rlats)
+    
     
         
     rdcostheta = radius/np.cos(rlats)
@@ -2153,7 +2160,7 @@ def dataset(filename, variablecodes, mode='grid', zonal=False, substellarlon=180
     return rdataset
 
 
-def advancedDataset(filename, variablecodes, substellarlon=180.0,
+def advancedDataset(filename, variablecodes, mode='grid', substellarlon=180.0,
                     radius=1.0,gravity=9.80665,gascon=287.0,logfile=None):
     '''Read a raw output file, and construct a dataset.
     
