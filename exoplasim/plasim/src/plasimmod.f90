@@ -85,6 +85,7 @@
       character (256) :: landmod_namelist    = "landmod_namelist"
       character (256) :: vegmod_namelist     = "vegmod_namelist"
       character (256) :: seamod_namelist     = "seamod_namelist"
+      character (256) :: aero_namelist       = "aero_namelist"
 
 !     ****************************************************************
 !     * Don't touch the following parameter definitions !            *
@@ -95,6 +96,7 @@
 !     ********************
 !
       parameter(NTRACE = 1)                ! # of tracers 1st. reserved for q
+      parameter(NAERO = 1)                 ! # of aerosols (tracers with extra gravitational settling term)
       parameter(NLON = NLAT + NLAT)        ! Number of longitudes
       parameter(NTRU = (NLON-1) / 3)       ! Triangular truncation
       parameter(NLPP = NLAT / NPRO)        ! Latitudes per process
@@ -146,7 +148,7 @@
       integer :: ntspd           =       0 ! number of timesteps per day
       integer :: mtspd           =       0 ! number of timesteps per standard day
       integer :: nwpd            =       1 ! number of writes per day
-      integer :: nlowio          =       0 ! Low I/O mode (0/1)
+      integer :: nlowio          =       1 ! Low I/O mode (0/1)
       integer :: nstpw           =       0 ! Timesteps between writes (0=use nwpd)
       integer :: nstps           =       0 ! Steps per snapshot (0=use ntspd)
       integer :: ndatim(7)       =      -1 ! date & time array
@@ -204,12 +206,13 @@
       integer :: nener3d  = 0   ! switch for 3d energy diagnostics
       integer :: ndheat   = 1   ! switch for heating due to momentum dissipation
       integer :: nseedlen = 0   ! length of random seed (set by lib call)
-      integer :: nsela    = 0   ! enable (1) or disable (0) Semi Lagrangian Advection
+      integer :: nsela    = 1   ! enable (1) or disable (0) Semi Lagrangian Advection
       integer :: nspinit  = 0   ! switch for LnPs initialization
       integer :: nsponge  = 0   ! switch for top sponge layer
       integer :: nstratosponge = 0 ! Switch for Newtonian cooling in hybrid stratosphere
       integer :: nqspec   = 1   ! 1: spectral q   0: gridpoint q (semi-Langrangian)
       integer :: nrdrag   = 0   ! 1: Apply Rayleigh fraction to 20-layer atmosphere
+      integer :: l_aero    = 1   ! 1: Aerosols on; this also enables the semi-Lagrangian advection tracer grid initialisations
 !>>> AYP -- NEEDED AS PART OF GLACIERMOD      
       integer :: nglspec = 0
 !>>> AYP      
@@ -343,11 +346,14 @@
 
       real :: dt(NHOR,NLEP)   = 0.     ! temperature 
       real :: dq(NHOR,NLEP)   = 0.     ! spec. humidity
+      real :: mmr(NHOR,NLEP) = 0.      ! Aerosol array (kg/kg)
+      real :: nrho(NHOR,NLEP) = 0.     ! Aerosol array (particles/m3)
       real :: du(NHOR,NLEP)   = 0.     ! zonal wind [m/s]
       real :: dv(NHOR,NLEP)   = 0.     ! meridional wind [m/s]
       real :: dp(NHOR)        = 0.     ! surface pressure
       real :: dqsat(NHOR,NLEP)= 0.     ! saturation humidity
       real :: dqt(NHOR,NLEP)  = 0.     ! adiabatic q-tendencies (for eg kuo)
+      real :: mmrt(NHOR,NLEP) = 0.     ! mmr tendency array
       real :: dcc(NHOR,NLEP)  = 0.     ! cloud cover
       real :: dql(NHOR,NLEP)  = 0.     ! Liquid water content
       real :: dqo3(NHOR,NLEV) = 0.     ! ozon concentration (kg/kg)
@@ -361,6 +367,8 @@
       real :: du0(NHOR,NLEP)  = 0.     ! zonal wind at time t 
       real :: dv0(NHOR,NLEP)  = 0.     ! meridional wind at time t 
       real :: dtrace(NLON,NLAT,NLEV,NTRACE) = 1.0 ! Trace array
+      real :: daeros(NLON,NLAT,NLEV,NAERO) = 0.0 ! Aerosol array (kg/kg) - for aerocore
+      real :: numrhos(NLON,NLAT,NLEV,NAERO) = 0.0 ! Aerosol array (particles/m3) - for radmod
       
       real :: mint(NHOR) = 0.0 !Minimum troposphere temperature 
       
@@ -531,6 +539,8 @@
       real :: aasd(NESP,NLEV)     = 0.
       real :: aasz(NESP,NLEV)     = 0.
       real :: aadq(NHOR,NLEP)     = 0.
+      real :: aammr(NHOR,NLEP)    = 0. ! Accumulated aerosol mmr (kg/kg)
+      real :: aanrho(NHOR,NLEP)   = 0. ! Accumulated aerosol number density (particles/m3)
       real :: aadmld(NHOR)        = 0.
       real :: aadt(NHOR,NLEP)     = 0.
       real :: aadwatc(NHOR)       = 0.

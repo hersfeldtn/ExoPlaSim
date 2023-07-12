@@ -18,7 +18,7 @@
 
       use pumamod, only: NLAT,NLEV,nud
 
-      logical,parameter :: ffsl_debug  = .false.
+      logical,parameter :: ffsl_debug  = .FALSE.
       logical,parameter :: ffsl_zcross = .true.
       logical,parameter :: ffsl_deform = .false.
 

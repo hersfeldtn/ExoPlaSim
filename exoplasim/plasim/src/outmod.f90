@@ -447,6 +447,17 @@
 !       **************
         
         call writegp(40,dsnow,141,0)
+        
+!       *********************
+!       * aerosol mass mixing ratio (from aerocore) *
+!       *********************
+        
+        if (l_aero > 0) then !
+           do jlev = 1 , NLEV
+              call writegp(40,mmr(:,jlev),410,jlev)
+              call writegp(40,nrho(:,jlev),411,jlev)
+           enddo
+        endif
       
       else ! Low I/O mode
       
@@ -458,6 +469,18 @@
            do jlev = 1 , NLEV
               aadq(:,jlev) = aadq(:,jlev)/real(naccuout)
               call writegp(40,aadq(1,jlev),133,jlev)
+           enddo
+        endif
+		
+!       *********************
+!       * aerosol mass mixing ratio (from aerocore) *
+!       *********************
+        if (l_aero > 0) then
+           do jlev = 1, NLEV
+              aammr(:,jlev) = aammr(:,jlev)/real(naccuout)
+              call writegp(40,aammr(1,jlev),410,jlev)
+              aanrho(:,jlev) = aanrho(:,jlev)/real(naccuout)
+              call writegp(40,aanrho(1,jlev),411,jlev)
            enddo
         endif
         
@@ -1294,6 +1317,17 @@
            enddo
         endif
         
+!       *********************
+!       * aerosol mmr *
+!       *********************
+
+        if (l_aero > 0) then
+           do jlev = 1, NLEV
+              call writegp(140,mmr(:,jlev),410,jlev)
+              call writegp(140,nrho(:,jlev),411,jlev)
+           enddo
+        endif
+
 !       **********************************
 !       * mixed-layer depth (from ocean) *
 !       **********************************
@@ -2399,6 +2433,7 @@
         enddo
         do j=1,NLEP
           aadq(:,j)  = 0.
+          aammr(:,j) = 0.
           aadt(:,j)  = 0.
           aadql(:,j) = 0.
           aadcc(:,j) = 0.
@@ -2517,7 +2552,8 @@
           aadqo3(:,j)  = aadqo3(:,j)  + dqo3(:,j)   
         enddo
         do j=1,NLEP
-          aadq(:,j)  = aadq(:,j)  + dq(:,j)   
+          aadq(:,j)  = aadq(:,j)  + dq(:,j)
+          aammr(:,j) = aammr(:,j) + mmr(:,j)  
           aadt(:,j)  = aadt(:,j)  + dt(:,j)     
           aadql(:,j) = aadql(:,j) + dql(:,j)     
           aadcc(:,j) = aadcc(:,j) + dcc(:,j)            

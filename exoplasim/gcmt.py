@@ -1,6 +1,8 @@
 import numpy as np
 import exoplasim.filesupport
 from exoplasim.filesupport import SUPPORTED
+import filesupport
+from filesupport import SUPPORTED
 import os, glob
 
 class _Constants:
