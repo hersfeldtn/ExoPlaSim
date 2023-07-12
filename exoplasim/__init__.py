@@ -260,7 +260,7 @@ class Model(object):
     
 
     """
-    def __init__(self,resolution="T21",layers=10,ncpus=8,precision=4,debug=True,inityear=0,
+    def __init__(self,resolution="T21",layers=10,ncpus=4,precision=4,debug=False,inityear=0,
                 recompile=False,optimization=None,mars=False,workdir="most",source=None,force991=False,
                 modelname="MOST_EXP",outputtype=".npz",crashtolerant=False,outputfaulttolerant=False):
         
@@ -1895,7 +1895,7 @@ class Model(object):
             self._crash()
     
     def configure(self,noutput=True,flux=1367.0,startemp=None,starradius=1.0,starspec=None,pH2=None,
-            pHe=None,pN2=None,pO2=None,pCO2=None,pAr=None,pNe=None,
+            pHe=None,pN2=None,pO2=None,pCO2=None,pCH4=None,pAr=None,pNe=None,
             pKr=None,pH2O=None,gascon=None,pressure=None,pressurebroaden=True,
             vtype=0,rotationperiod=1.0,synchronous=False,substellarlon=180.0,
             keplerian=False,meananomaly0=None,
@@ -2162,6 +2162,8 @@ class Model(object):
                 CO2 partial pressure in bars. This gets translated into a ppmv concentration, so if you want to specify/vary CO2 but don't need the other gases, specifying pCO2, pressure, and gascon will do the trick. In most use cases, however, just specifying pN2 and pCO2 will give good enough behavior.
             pH2O : float, optional  
                 H2O partial pressure in bars. This is only useful in setting the gas constant and surface pressure; it will have no effect on actual moist processes.
+            pCH4 : float, optional
+                CH4 partial pressure in bars. This is only useful in setting the gas constant and surface pressure; it will have no effect on radiation.
                     
     **Surface Parameters**
     
@@ -2280,10 +2282,11 @@ class Model(object):
             aerosol : bool, optional
                 If True, compute aerosol transport.
             aerorad : bool, optional
-                If True, include radiative scattering from aerosols.
+                If True, include radiative scattering from aerosols. If True, you must also set `aerofile`.
             aerofile : str, optional
-                Name/path to file constaining aerosol optical data. If set, this will have the 
-                effect of additionally setting `aerorad=True`.
+                Name/path to file constaining aerosol optical constants. If set, this will have the 
+                effect of additionally setting `aerorad=True`. This should contain Q factors for extenction,
+                scattering, backscatter, and g in bands 1 and 2. Several samples are included in exoplasim/hazeconstants.
             aerobulk : int, optional
                 Type of bulk atmosphere for aerosol suspension. If 1, N2 is assumed for the dominant
                 bulk molecule in the atmosphere. If 2, H2 is assumed.
@@ -2294,6 +2297,8 @@ class Model(object):
                 Density of the aerosol particle in kg/m3
             fcoeff ; float, optional
                 Initial haze mass mixing ratio in kg/kg
+            apart : float, optional
+                Aerosol particle radius in meters. Default is 50 nm (`50e-9`).
                 
     The aerosol module (developed by Maureen J. Cohen), duplicates ExoPlaSim's tracer transport and 
     uses the Flux-Form Semi-Lagrangian (FFSL) algorithm developed by S.J. Lin, adapted for
@@ -2401,12 +2406,18 @@ References
             self._edit_namelist("radmod_namelist","STARFILE","'%s'"%starspec)
             self._edit_namelist("radmod_namelist","STARFILEHR","'%s_hr.dat'"%(starspec[:-4]))
         self.starspec = starspec
-        if aerofile:
+        if aerofile is not None:
+            sourcedir = "/".join(__file__.split("/")[:-1])
+            if f"{sourcedir}/hazeconstants/{aerofile}" in glob.glob(f"{sourcedir}/hazeconstants/*.dat"):
+                os.system(f"cp {sourcedir}/hazeconstants/{aerofile} {self.workdir}/")
+            elif f"{sourcedir}/hazeconstants/{aerofile}.dat" in glob.glob(f"{sourcedir}/hazeconstants/*.dat"):
+                os.system(f"cp {sourcedir}/hazeconstants/{aerofile}.dat {self.workdir}/")
             if aerofile[-4:]==".dat":
                 aerofile=aerofile[:-4]
             self.aerorad=True
             self._edit_namelist("aero_namelist","l_aerorad",str(self.aerorad*1))
             self._edit_namelist("aero_namelist","aerofile","'%s.dat'"%aerofile)
+            aerofile+=".dat"
         self.aerofile = aerofile
         
         if pH2:
@@ -2690,11 +2701,11 @@ References
         
         if aerosol==True:
             self._edit_namelist("plasim_namelist","L_AERO",str(aerosol*1))
-            self._edit_namelist("aero_namelist","l_source",str(asource*1))
+            self._edit_namelist("aero_namelist","l_source",str(asource))
             self._edit_namelist("aero_namelist","apart",str(apart))
             self._edit_namelist("aero_namelist","rhop",str(rhop))
             self._edit_namelist("aero_namelist","fcoeff",str(fcoeff))
-            self._edit_namelist("aero_namelist","l_bulk",str(aerobulk*1))
+            self._edit_namelist("aero_namelist","l_bulk",str(aerobulk))
             self._edit_namelist("aero_namelist","l_aerorad",str(aerorad*1))
         elif aerosol==False:
             self._edit_namelist("plasim_namelist","L_AERO",str(aerosol*1))
@@ -3074,7 +3085,7 @@ References
                     nstorms=nstorms,stormcapture=stormcapture,topomap=topomap,tlcontrast=tlcontrast,
                     otherargs=otherargs,glaciers=glaciers,threshold=threshold,keplerian=keplerian,
                     meananomaly0=meananomaly0,apart=apart,rhop=rhop,fcoeff=fcoeff,aerobulk=aerobulk,
-                    aerorad=aerorad.aerosol=aerosol,asource=asource,aerofile=aerofile)       
+                    aerorad=aerorad,aerosol=aerosol,asource=asource,aerofile=aerofile)       
     
     def modify(self,**kwargs):
         """Modify any already-configured parameters. All parameters accepted by :py:func:`configure() <exoplasim.Model.configure>` can be passed as arguments.
@@ -3097,6 +3108,7 @@ References
         if oldpressure==0.0:
             oldpressure = self.pressure
             
+        sourcedir = "/".join(__file__.split("/")[:-1])
         
         if "timestep" in kwargs.keys():
             self.timestep=kwargs["timestep"]
@@ -3687,6 +3699,71 @@ References
             
             if key=="threshold":
                 self.threshold = value
+                
+            if key=="aerosol":
+                self.aerosol = value
+                self._edit_namelist("plasim_namelist","L_AERO",str(self.aerosol*1))
+                
+            if key=="asource":
+                self.asource = value
+                self._edit_namelist("aero_namelist","l_source",str(self.asource))
+                
+            if key=="apart":
+                self.apart = value
+                self._edit_namelist("aero_namelist","apart",str(self.apart))
+                
+            if key=="rhop":
+                self.rhop = value
+                self._edit_namelist("aero_namelist","rhop",str(self.rhop))
+                
+            if key=="fcoeff":
+                self.fcoeff = value
+                self._edit_namelist("aero_namelist","fcoeff",str(self.fcoeff))
+            
+            if key=="aerobulk":
+                self.aerobulk = value
+                self._edit_namelist("aero_namelist","l_source",str(self.aerobulk))
+                
+            if key=="aerorad":
+                self.aerorad = value
+                if "aerofile" not in kwargs and self.aerorad:
+                    self.aerofile = "gj667_constants_500.dat"
+                elif "aerofile" in kwargs and self.aerorad:
+                    self.aerofile = kwargs["aerofile"]
+                    if self.aerofile is None:
+                        self.aerofile = "gj667_constants_500.dat"
+                if self.aerorad:
+                    if f"{sourcedir}/hazeconstants/{self.aerofile}" in glob.glob(f"{sourcedir}/hazeconstants/*.dat"):
+                        os.system(f"cp {sourcedir}/hazeconstants/{self.aerofile} {self.workdir}/")
+                    elif f"{sourcedir}/hazeconstants/{self.aerofile}.dat" in glob.glob(f"{sourcedir}/hazeconstants/*.dat"):
+                        os.system(f"cp {sourcedir}/hazeconstants/{self.aerofile}.dat {self.workdir}/")
+                    if self.aerofile[-4:]==".dat":
+                        self.aerofile=aerofile[:-4]
+                    self.aerorad=True
+                    self._edit_namelist("aero_namelist","l_aerorad",str(self.aerorad*1))
+                    self._edit_namelist("aero_namelist","aerofile","'%s.dat'"%self.aerofile)
+                    self.aerofile+=".dat"
+                else:
+                    self._edit_namelist("aero_namelist","l_aerorad",str(self.aerorad*1))
+                    
+                
+            if key=="aerofile":
+                self.aerofile = value
+                if "aerorad" not in kwargs and self.aerofile is not None:
+                    self.aerorad = True
+                if self.aerofile is not None:
+                    if f"{sourcedir}/hazeconstants/{self.aerofile}" in glob.glob(f"{sourcedir}/hazeconstants/*.dat"):
+                        os.system(f"cp {sourcedir}/hazeconstants/{self.aerofile} {self.workdir}/")
+                    elif f"{sourcedir}/hazeconstants/{self.aerofile}.dat" in glob.glob(f"{sourcedir}/hazeconstants/*.dat"):
+                        os.system(f"cp {sourcedir}/hazeconstants/{self.aerofile}.dat {self.workdir}/")
+                    if self.aerofile[-4:]==".dat":
+                        self.aerofile=aerofile[:-4]
+                    self.aerorad=True
+                    self._edit_namelist("aero_namelist","l_aerorad",str(self.aerorad*1))
+                    self._edit_namelist("aero_namelist","aerofile","'%s.dat'"%self.aerofile)
+                    self.aerofile+=".dat"
+                
+                
             
             if key=="otherargs":
                 otherargs=value

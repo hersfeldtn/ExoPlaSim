@@ -701,7 +701,7 @@
 ! Compute fluxes in the vertical direction
       call FZPPM(qz,fz,IM,JM,NL,daero,W,delp,KORD)
 !****6***0*********0*********0*********0*********0*********0**********72
-      write(nud,*) 'Max and min mmr =',maxval(mmr), minval(mmr)
+      if (debug) write(nud,*) 'Max and min mmr =',maxval(mmr), minval(mmr)
 !****6***0*********0*********0*********0*********0*********0**********72
 ! Compute vertical flux due to gravitational settling 
       call gsettle(qz,im,jm,nl,rhog,vels,nud,gz)
