@@ -2289,7 +2289,7 @@ class Model(object):
                 scattering, backscatter, and g in bands 1 and 2. Several samples are included in exoplasim/hazeconstants.
             aerobulk : int, optional
                 Type of bulk atmosphere for aerosol suspension. If 1, N2 is assumed for the dominant
-                bulk molecule in the atmosphere. If 2, H2 is assumed.
+                bulk molecule in the atmosphere. If 2, H2 is assumed. If 3, CO2 is assumed.
             asource : int, optional
                 Type of haze source. If 1, photochemical haze is produced in the top model layer.
                 If 2, the aerosol is dust and is produced from the surface.
