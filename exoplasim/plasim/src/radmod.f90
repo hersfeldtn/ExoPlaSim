@@ -1416,7 +1416,7 @@
 	  endif
 	  call mpbcr(syncdays)
 	  lonoffset = mod(syncdays,1.0) * (-360.0)
-	  if (allowlibrate > 0 .AND. ngenkeplerian > 0) lonoffset = lonoffset + (orbnu*180.0/PI - (zcday*360.0 + meananom0))
+	  if (allowlibrate > 0) lonoffset = lonoffset + (orbnu*180.0/PI - (zcday*360.0 + meananom0))
         if (mypid==NROOT) fixedlon = fixedlon + desync*mpstep
         call mpbcr(fixedlon)
         zrtim = TWOPI
