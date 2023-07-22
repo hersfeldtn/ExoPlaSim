@@ -22,17 +22,6 @@ except:
   pass
 import platform
 
-smws = {'mH2': 2.01588,
-        'mHe': 4.002602,
-        'mN2': 28.0134,
-        'mO2': 31.9988,
-        'mCO2':44.01,
-        'mAr': 39.948,
-        'mNe': 20.1797,
-        'mKr': 83.798,
-        'mH2O':18.01528,
-        'mCH4': 16.04246}
-
 gases_default = {'pH2': 0.0,
                 'pHe': 5.24e-6,
                 'pN2': 0.78084,
@@ -41,8 +30,7 @@ gases_default = {'pH2': 0.0,
                 'pAr': 9.34e-3,
                 'pNe': 18.18e-6,
                 'pKr': 1.14e-6,
-                'pH2O':0.01,
-                'pCH4': 0.0}
+                'pH2O':0.01}
 
 
 def _noneparse(text,dtype):
@@ -260,7 +248,7 @@ class Model(object):
     
 
     """
-    def __init__(self,resolution="T21",layers=10,ncpus=4,precision=4,debug=False,inityear=0,
+    def __init__(self,resolution="T21",layers=10,ncpus=4,precision=8,debug=False,inityear=0,
                 recompile=False,optimization=None,mars=False,workdir="most",source=None,force991=False,
                 modelname="MOST_EXP",outputtype=".npz",crashtolerant=False,outputfaulttolerant=False):
         
@@ -678,10 +666,9 @@ class Model(object):
                 try:
                     timeavg=self.postprocess(dataname,None,
                                             log="burnout",crashifbroken=crashifbroken)
-                    if self.snapshots:
-                        snapsht=self.postprocess(snapname,None,ftype="snapshot",
+                    snapsht=self.postprocess(snapname,None,ftype="snapshot",
                                             log="snapout",crashifbroken=crashifbroken)
-                        os.system("mv %s%s snapshots/"%(snapname,self.extension))
+                    os.system("mv %s*%s snapshots/"%(snapname,self.extension))
                     if self.highcadence["toggle"]:
                         highcdn=self.postprocess(hcname  ,None,ftype="highcadence",
                                                 log="hcout"  ,crashifbroken=crashifbroken)
@@ -971,10 +958,9 @@ class Model(object):
                     try:
                         timeavg=self.postprocess(dataname,None,
                                                 log="burnout",crashifbroken=crashifbroken)
-                        if self.snapshots:
-                            snapsht=self.postprocess(snapname,None,ftype="snapshot",
+                        snapsht=self.postprocess(snapname,None,ftype="snapshot",
                                                 log="snapout",crashifbroken=crashifbroken)
-                            os.system("mv %s%s snapshots/"%(snapname,self.extension))
+                        os.system("mv %s*%s snapshots/"%(snapname,self.extension))
                         if self.highcadence["toggle"]:
                             highcdn=self.postprocess(hcname  ,None,ftype="highcadence",
                                                     log="hcout"  ,crashifbroken=crashifbroken)
@@ -1401,7 +1387,7 @@ class Model(object):
             os.system("cp %s %s.DIAG"%(diags[-1],self.modelname))
             if self.snapshots:
                 if self.extension==".npz" or self.extension==".npy":
-                    metasnps = sorted(glob.glob("%s/*SNAP*metadata%s"%(self.workdir,self.extension)))
+                    metasnps = sorted(glob.glob("%s/snapshots/*metadata%s"%(self.workdir,self.extension)))
                     tmpsnps = sorted(glob.glob("%s/snapshots/*%s"%(self.workdir,self.extension)))
                     snps = sorted(list(set(tmpsnps)-set(metasnps)))
                 else:
@@ -1895,36 +1881,33 @@ class Model(object):
             self._crash()
     
     def configure(self,noutput=True,flux=1367.0,startemp=None,starradius=1.0,starspec=None,pH2=None,
-            pHe=None,pN2=None,pO2=None,pCO2=None,pCH4=None,pAr=None,pNe=None,
+            pHe=None,pN2=None,pO2=None,pCO2=None,pAr=None,pNe=None,
             pKr=None,pH2O=None,gascon=None,pressure=None,pressurebroaden=True,
             vtype=0,rotationperiod=1.0,synchronous=False,substellarlon=180.0,
-            keplerian=False,meananomaly0=None,
+            keplerian=False,meananomaly0=None,allowlibrate=True,soldaysperorb=0.0,
             year=None,glaciers={"toggle":False,"mindepth":2.0,"initialh":-1.0},
-            restartfile=None,gravity=10.9,radius=1.12,eccentricity=0.0,
-            obliquity=0.0,lonvernaleq=None,fixedorbit=True,orography=None,
-            seaice=False,co2weathering=False,evolveco2=False,physicsfilter="gp|exp|sp",
+            restartfile=None,gravity=None,radius=None,eccentricity=None,
+            obliquity=None,lonvernaleq=None,fixedorbit=False,orography=None,
+            seaice=True,co2weathering=False,evolveco2=False,physicsfilter=None,
             filterkappa=8.0,filterpower=8,filterLHN0=15.0,diffusionwaven=None,
             qdiffusion=None,tdiffusion=None,zdiffusion=None,ddiffusion=None,
             diffusionpower=None,erosionsupplylimit=None,outgassing=50.0,snowicealbedo=None,
             twobandalbedo=False,maxsnow=None,soilalbedo=None,oceanalbedo=None,
             oceanzenith="ECHAM-3",wetsoil=False,soilwatercap=None,vegetation=False,
             vegaccel=1,nforestgrowth=1.0,initgrowth=0.5,initstomcond=1.0,initrough=2.0,
-            initsoilcarbon=0.0,initplantcarbon=0.0,aquaplanet=True,
-            desertplanet=False,soilsaturation=None,drycore=False,ozone=False,
+            initsoilcarbon=0.0,initplantcarbon=0.0,aquaplanet=False,
+            desertplanet=False,soilsaturation=None,drycore=False,ozone=True,
             cpsoil=None,soildepth=1.0,mldepth=50.0,tlcontrast=0.0,desync=0.0,
             writefrequency=None,modeltop=None,stratosphere=False,top_restoretime=None,
-            tropopause=None,timestep=15.0,runscript=None,columnmode=None,runsteps=None,
+            tropopause=None,timestep=45.0,runscript=None,columnmode=None,runsteps=None,
             highcadence={"toggle":0,"start":320,"end":576,"interval":4},
-            snapshots=2880,resources=[],landmap=None,stormclim=False,nstorms=4,
+            snapshots=None,resources=[],landmap=None,stormclim=False,nstorms=4,
             stormcapture={"VITHRESH":0.145,"GPITHRESH":0.37,"VMXTHRESH":33.0,
                             "LAVTHRESH":1.2e-5,"VRMTHRESH":0.577,"MINSURFTEMP":298.15,
                             "MAXSURFTEMP":373.15,"WINDTHRESH":33.0,"SWINDTHRESH":20.5,
                             "SIZETHRESH":30,"ENDTHRESH":16,"MINSTORMLEN":256,
                             "MAXSTORMLEN":1024,"NKTRIGGER":0,"toggle":0},
-            topomap=None,threshold=5.0e-4,otherargs={"NQSPEC@plasim_namelist":'1',"NLOWIO@plasim_namelist":'1'},
-            aerosol=False,aerobulk=1,apart=5e-09,rhop=1000.0,asource=1,
-            fcoeff=10e-13,aerorad=True,aerofile=None):
-
+            topomap=None,threshold=5.0e-4,otherargs={}):
         """Configure the model's namelists and boundary conditions.
         
         The defaults here are appropriate for an Earth model.
@@ -2037,6 +2020,10 @@ class Model(object):
                The rate of drift of the substellar point in degrees per minute. May be positive or negative.
             substellarlon : float, optional
                The longitude of the substellar point, if synchronous==True. Default 180°
+            allowlibrate : bool, optional
+               True/False. If True, allows for libration of the substellar point due to obliquity and, if keplerian==True, eccentricity. True by default.
+            soldaysperorb : float, optional
+               If synchronous==True, solar days experienced per orbit. 0.0 is typical tidal-locked behavior, but other values can be used for other spin-orbit resonances, e.g. 0.5 for 3:2 resonance or 1.0 for 2:1. In these cases, substellarlon marks the starting substellar longitude (before accounting for libration).
             pressurebroaden : bool, optional 
                True/False. If False, pressure-broadening of absorbers no longer depends
                on surface pressure. Default is True
@@ -2156,14 +2143,10 @@ class Model(object):
                 Ne partial pressure in bars.
             pKr : float, optional  
                 Kr partial pressure in bars.
-            pCH4 : float, optional
-                Methane partial pressure in bars.
             pCO2 : float, optional  
                 CO2 partial pressure in bars. This gets translated into a ppmv concentration, so if you want to specify/vary CO2 but don't need the other gases, specifying pCO2, pressure, and gascon will do the trick. In most use cases, however, just specifying pN2 and pCO2 will give good enough behavior.
             pH2O : float, optional  
                 H2O partial pressure in bars. This is only useful in setting the gas constant and surface pressure; it will have no effect on actual moist processes.
-            pCH4 : float, optional
-                CH4 partial pressure in bars. This is only useful in setting the gas constant and surface pressure; it will have no effect on radiation.
                     
     **Surface Parameters**
     
@@ -2276,37 +2259,7 @@ class Model(object):
               MAXSTORMLEN : float, optional  
                    (default) Maximum number of timesteps to write output. Default 1024
            
-    Note that actual number of writes will be stormlen/interval, as set in highcadence. This interval defaults to 4, so 64 writes minimum, 256 max. For more details on the storm climatology factors considered here, see [6]_.
-        
-        Aerosols
-            aerosol : bool, optional
-                If True, compute aerosol transport.
-            aerorad : bool, optional
-                If True, include radiative scattering from aerosols. If True, you must also set `aerofile`.
-            aerofile : str, optional
-                Name/path to file constaining aerosol optical constants. If set, this will have the 
-                effect of additionally setting `aerorad=True`. This should contain Q factors for extenction,
-                scattering, backscatter, and g in bands 1 and 2. Several samples are included in exoplasim/hazeconstants.
-            aerobulk : int, optional
-                Type of bulk atmosphere for aerosol suspension. If 1, N2 is assumed for the dominant
-                bulk molecule in the atmosphere. If 2, H2 is assumed. If 3, CO2 is assumed.
-            asource : int, optional
-                Type of haze source. If 1, photochemical haze is produced in the top model layer.
-                If 2, the aerosol is dust and is produced from the surface.
-            rhop : float, optional
-                Density of the aerosol particle in kg/m3
-            fcoeff ; float, optional
-                Initial haze mass mixing ratio in kg/kg
-            apart : float, optional
-                Aerosol particle radius in meters. Default is 50 nm (`50e-9`).
-                
-    The aerosol module (developed by Maureen J. Cohen), duplicates ExoPlaSim's tracer transport and 
-    uses the Flux-Form Semi-Lagrangian (FFSL) algorithm developed by S.J. Lin, adapted for
-    the original PlaSim by Hui Wan. It additionally includes the addition of vertical gravitational 
-    settling of solid-phase particles. Aerosol sources are currently prescribed within the model, and
-    are not generated dynamically. For more information on implementation, see [2]_.
-    
-            
+    Note that actual number of writes will be stormlen/interval, as set in highcadence. This interval defaults to 4, so 64 writes minimum, 256 max. For more details on the storm climatology factors considered here, see [5]_.
         
 Notes
 -----
@@ -2319,11 +2272,11 @@ Notes
         Three filter functional forms are included in ExoPlaSim: Cesaro, exponential, and Lander-Hoskins. Their functional forms are given below, where `n` is the wavenumber, and `N` is the
         truncation wavenumber (e.g. 21 for T21):
         
-        Cesaro: :math:`f(n)=1-\\frac{n}{N+1}` [3]_
+        Cesaro: :math:`f(n)=1-\\frac{n}{N+1}` [2]_
         
-        Exponential: :math:`f(n)=\exp\left[-\kappa\left(\\frac{n}{N}\\right)^\gamma\\right]` [4]_
+        Exponential: :math:`f(n)=\exp\left[-\kappa\left(\\frac{n}{N}\\right)^\gamma\\right]` [3]_
         
-        Lander-Hoskins: :math:`f(n)=\exp\left[-\left(\\frac{n(n+1)}{n_0(n_0+1}\\right)^2\\right]` [4]_ [5]_
+        Lander-Hoskins: :math:`f(n)=\exp\left[-\left(\\frac{n(n+1)}{n_0(n_0+1}\\right)^2\\right]` [3]_ [4]_
         
         :math:`\kappa` is exposed to the user through ``filterkappa``, 
         :math:`\gamma` is exposed through ``filterpower``, and :math:`n_0` is
@@ -2335,7 +2288,7 @@ Notes
         caused by sharp jumps and small features in the gridpoint tendencies. Conversely, a filter
         at the spectral->gridpoint transform is good for dealing with oscillations that come from
         small-scale features in the spectral fields causing small-scale features to appear in the
-        gridpoint tendencies [4]_. Since we deal with climate systems where everything is coupled, 
+        gridpoint tendencies [3]_. Since we deal with climate systems where everything is coupled, 
         any oscillations not removed by one filter will be amplified through physical feedbacks if not 
         suppressed by the other filter.
         
@@ -2347,15 +2300,13 @@ References
 ----------
         .. [1] Foley, B. J. (2015). The Role of Plate Tectonic-Climate Coupling and Exposed Land Area in the Development of Habitable Climates on Rocky Planets. The Astrophysical Journal, 812(1), 36. https://doi.org/10.1088/0004-637X/812/1/36
         
-        .. [2] Cohen, M. J., et al (2023). Haze optical thickness in exoplanet atmospheres varies with rotation rate.
+        .. [2] Navarra, A., Stern, W. F., & Miyakoda, K. (1994). Reduction of the Gibbs Oscillation in Spectral Model Simulations. Journal of Climate, 7(8), 1169–1183. https://doi.org/10.1175/1520-0442(1994)007<1169:ROTGOI>2.0.CO;2
         
-        .. [3] Navarra, A., Stern, W. F., & Miyakoda, K. (1994). Reduction of the Gibbs Oscillation in Spectral Model Simulations. Journal of Climate, 7(8), 1169–1183. https://doi.org/10.1175/1520-0442(1994)007<1169:ROTGOI>2.0.CO;2
+        .. [3] Lander, J., & Hoskins, B. J. (1997). Believable Scales and Parameterizations in a Spectral Transform Model. Monthly Weather Review, 125(2), 292–303. https://doi.org/10.1175/1520-0493(1997)125<0292:BSAPIA>2.0.CO;2
         
-        .. [4] Lander, J., & Hoskins, B. J. (1997). Believable Scales and Parameterizations in a Spectral Transform Model. Monthly Weather Review, 125(2), 292–303. https://doi.org/10.1175/1520-0493(1997)125<0292:BSAPIA>2.0.CO;2
+        .. [4] Scinocca, J. F., McFarlane, N. A., Lazare, M., Li, J., & Plummer, D. (2008). Technical Note: The CCCma third generation AGCM and its extension into the middle atmosphere. Atmospheric Chemistry and Physics, 8(23), 7055–7074. https://doi.org/10.5194/acp-8-7055-2008
         
-        .. [5] Scinocca, J. F., McFarlane, N. A., Lazare, M., Li, J., & Plummer, D. (2008). Technical Note: The CCCma third generation AGCM and its extension into the middle atmosphere. Atmospheric Chemistry and Physics, 8(23), 7055–7074. https://doi.org/10.5194/acp-8-7055-2008
-        
-        .. [6] Komacek, T. D., Chavas, D. R., & Abbot, D. S. (2020). Hurricane Genesis is Favorable on Terrestrial Exoplanets Orbiting Late-type M Dwarf Stars. The Astrophysical Journal, 898(2), 115. https://doi.org/10.3847/1538-4357/aba0b9
+        .. [5] Komacek, T. D., Chavas, D. R., & Abbot, D. S. (2020). Hurricane Genesis is Favorable on Terrestrial Exoplanets Orbiting Late-type M Dwarf Stars. The Astrophysical Journal, 898(2), 115. https://doi.org/10.3847/1538-4357/aba0b9
         
         """
         self._edit_namelist("plasim_namelist","NOUTPUT",str(noutput*1))
@@ -2406,19 +2357,6 @@ References
             self._edit_namelist("radmod_namelist","STARFILE","'%s'"%starspec)
             self._edit_namelist("radmod_namelist","STARFILEHR","'%s_hr.dat'"%(starspec[:-4]))
         self.starspec = starspec
-        if aerofile is not None:
-            sourcedir = "/".join(__file__.split("/")[:-1])
-            if f"{sourcedir}/hazeconstants/{aerofile}" in glob.glob(f"{sourcedir}/hazeconstants/*.dat"):
-                os.system(f"cp {sourcedir}/hazeconstants/{aerofile} {self.workdir}/")
-            elif f"{sourcedir}/hazeconstants/{aerofile}.dat" in glob.glob(f"{sourcedir}/hazeconstants/*.dat"):
-                os.system(f"cp {sourcedir}/hazeconstants/{aerofile}.dat {self.workdir}/")
-            if aerofile[-4:]==".dat":
-                aerofile=aerofile[:-4]
-            self.aerorad=True
-            self._edit_namelist("aero_namelist","l_aerorad",str(self.aerorad*1))
-            self._edit_namelist("aero_namelist","aerofile","'%s.dat'"%aerofile)
-            aerofile+=".dat"
-        self.aerofile = aerofile
         
         if pH2:
             self.pgases["pH2"]=pH2
@@ -2438,8 +2376,6 @@ References
             self.pgases["pKr"]=pKr
         if pH2O:
             self.pgases["pH2O"]=pH2O
-        if pCH4:
-            self.pgases["pCH4"]=pCH4
         
         if len(self.pgases)==0:
             if not pressure:
@@ -2580,6 +2516,12 @@ References
             self._edit_namelist("planet_namelist","MEANANOM0",str(meananomaly0))
         self.meananomaly0 = meananomaly0
         
+        self._edit_namelist("radmod_namelist","ALLOWLIBRATE",str(allowlibrate*1))
+        self.allowlibrate = allowlibrate
+        
+        self._edit_namelist("radmod_namelist","DAYSPERORB",str(soldaysperorb))
+        self.soldaysperorb = soldaysperorb
+        
         if type(orography)!=type(None):
             self._edit_namelist("landmod_namelist","OROSCALE",str(orography))
             self._edit_namelist("glacier_namelist","NGLACIER","1")
@@ -2699,23 +2641,6 @@ References
             self._edit_namelist("seamod_namelist","DOCEANALB","%s,%s"%(alb,alb))
         self.oceanalbedo=oceanalbedo
         
-        if aerosol==True:
-            self._edit_namelist("plasim_namelist","L_AERO",str(aerosol*1))
-            self._edit_namelist("aero_namelist","l_source",str(asource))
-            self._edit_namelist("aero_namelist","apart",str(apart))
-            self._edit_namelist("aero_namelist","rhop",str(rhop))
-            self._edit_namelist("aero_namelist","fcoeff",str(fcoeff))
-            self._edit_namelist("aero_namelist","l_bulk",str(aerobulk))
-            self._edit_namelist("aero_namelist","l_aerorad",str(aerorad*1))
-        elif aerosol==False:
-            self._edit_namelist("plasim_namelist","L_AERO",str(aerosol*1))
-        self.aerosol=aerosol
-        self.asource=asource
-        self.apart=apart
-        self.rhop=rhop
-        self.fcoeff=fcoeff
-        self.aerobulk=aerobulk
-        self.aerorad=aerorad
         if oceanzenith=="lambertian" or oceanzenith=="Lambertian" or oceanzenith=="uniform":
             self._edit_namelist("radmod_namelist","NECHAM","0")
             self._edit_namelist("radmod_namelist","NECHAM6","0")
@@ -3036,26 +2961,16 @@ References
             meananomaly0 = float(cfg[84])
         except:
             meananomaly0 = None
-            
-        #Maureen's aerosol stuff:
+        
         try:
-            aerosol = bool(int(cfg[85]))
-            apart = float(cfg[86])
-            asource = int(cfg[87])
-            rhop = float(cfg[88])
-            fcoeff = float(cfg[89])
-            aerobulk = int(cfg[90])
-            aerorad = bool(int(cfg[91]))
-            aerofile = _noneparse(cfg[92],str)
+            allowlibrate = bool(cfg[85])
         except:
-            aerosol=False
-            apart = 5.0e-9
-            asource = 1
-            rhop = 1000.0
-            fcoeff = 10e-13
-            aerobulk = 1
-            aerorad = True
-            aerofile = None
+            allowlibrate = True
+        
+        try:
+            soldaysperorb = float(cfg[86])
+        except:
+            soldaysperorb = 0.0
         
         self.configure(noutput=noutput,flux=flux,startemp=startemp,starspec=starspec,starradius=starradius,
                     gascon=gascon,pressure=pressure,pressurebroaden=pressurebroaden,
@@ -3084,8 +2999,7 @@ References
                     snapshots=snapshots,resources=resources,landmap=landmap,stormclim=stormclim,
                     nstorms=nstorms,stormcapture=stormcapture,topomap=topomap,tlcontrast=tlcontrast,
                     otherargs=otherargs,glaciers=glaciers,threshold=threshold,keplerian=keplerian,
-                    meananomaly0=meananomaly0,apart=apart,rhop=rhop,fcoeff=fcoeff,aerobulk=aerobulk,
-                    aerorad=aerorad,aerosol=aerosol,asource=asource,aerofile=aerofile)       
+                    meananomaly0=meananomaly0, allowlibrate=allowlibrate, soldaysperorb=soldaysperorb)       
     
     def modify(self,**kwargs):
         """Modify any already-configured parameters. All parameters accepted by :py:func:`configure() <exoplasim.Model.configure>` can be passed as arguments.
@@ -3108,7 +3022,6 @@ References
         if oldpressure==0.0:
             oldpressure = self.pressure
             
-        sourcedir = "/".join(__file__.split("/")[:-1])
         
         if "timestep" in kwargs.keys():
             self.timestep=kwargs["timestep"]
@@ -3223,18 +3136,12 @@ References
                     self.pgases["pKr"]=value
                 else:
                     self.pgases["pKr"]=0.0
-            if key=="pH2O":
+            if key=="pH20":
                 setgas=True
                 if type(value)!=type(None):
                     self.pgases["pH2O"]=value
                 else:
                     self.pgases["pH2O"]=0.0
-            if key=="pCH4":
-                setgas=True
-                if type(value)!=type(None):
-                    self.pgases["pCH4"]=value
-                else:
-                    self.pgases["pCH4"]=0.0
             if key=="pressure":
                 pressure=value
                 setpressure=True
@@ -3293,6 +3200,12 @@ References
                 self.meananomaly0=value
                 if self.meanomaly0 is not None:
                     self._edit_namelist("planet_namelist","MEANANOMALY0",str(self.meananomaly0))
+            if key=="allowlibrate":
+                self.allowlibrate=value
+                self._edit_namelist("radmod_namelist","ALLOWLIBRATE",str(allowlibrate*1))
+            if key=="soldaysperorb":
+                self.soldaysperorb=value
+                self._edit_namelist("radmod_namelist","DAYSPERORB",str(soldaysperorb))
             if key=="tlcontrast":
                 self.tlcontrast=value
                 self._edit_namelist("plasim_namelist","DTTL",str(self.tlcontrast))
@@ -3699,71 +3612,6 @@ References
             
             if key=="threshold":
                 self.threshold = value
-                
-            if key=="aerosol":
-                self.aerosol = value
-                self._edit_namelist("plasim_namelist","L_AERO",str(self.aerosol*1))
-                
-            if key=="asource":
-                self.asource = value
-                self._edit_namelist("aero_namelist","l_source",str(self.asource))
-                
-            if key=="apart":
-                self.apart = value
-                self._edit_namelist("aero_namelist","apart",str(self.apart))
-                
-            if key=="rhop":
-                self.rhop = value
-                self._edit_namelist("aero_namelist","rhop",str(self.rhop))
-                
-            if key=="fcoeff":
-                self.fcoeff = value
-                self._edit_namelist("aero_namelist","fcoeff",str(self.fcoeff))
-            
-            if key=="aerobulk":
-                self.aerobulk = value
-                self._edit_namelist("aero_namelist","l_source",str(self.aerobulk))
-                
-            if key=="aerorad":
-                self.aerorad = value
-                if "aerofile" not in kwargs and self.aerorad:
-                    self.aerofile = "gj667_constants_500.dat"
-                elif "aerofile" in kwargs and self.aerorad:
-                    self.aerofile = kwargs["aerofile"]
-                    if self.aerofile is None:
-                        self.aerofile = "gj667_constants_500.dat"
-                if self.aerorad:
-                    if f"{sourcedir}/hazeconstants/{self.aerofile}" in glob.glob(f"{sourcedir}/hazeconstants/*.dat"):
-                        os.system(f"cp {sourcedir}/hazeconstants/{self.aerofile} {self.workdir}/")
-                    elif f"{sourcedir}/hazeconstants/{self.aerofile}.dat" in glob.glob(f"{sourcedir}/hazeconstants/*.dat"):
-                        os.system(f"cp {sourcedir}/hazeconstants/{self.aerofile}.dat {self.workdir}/")
-                    if self.aerofile[-4:]==".dat":
-                        self.aerofile=aerofile[:-4]
-                    self.aerorad=True
-                    self._edit_namelist("aero_namelist","l_aerorad",str(self.aerorad*1))
-                    self._edit_namelist("aero_namelist","aerofile","'%s.dat'"%self.aerofile)
-                    self.aerofile+=".dat"
-                else:
-                    self._edit_namelist("aero_namelist","l_aerorad",str(self.aerorad*1))
-                    
-                
-            if key=="aerofile":
-                self.aerofile = value
-                if "aerorad" not in kwargs and self.aerofile is not None:
-                    self.aerorad = True
-                if self.aerofile is not None:
-                    if f"{sourcedir}/hazeconstants/{self.aerofile}" in glob.glob(f"{sourcedir}/hazeconstants/*.dat"):
-                        os.system(f"cp {sourcedir}/hazeconstants/{self.aerofile} {self.workdir}/")
-                    elif f"{sourcedir}/hazeconstants/{self.aerofile}.dat" in glob.glob(f"{sourcedir}/hazeconstants/*.dat"):
-                        os.system(f"cp {sourcedir}/hazeconstants/{self.aerofile}.dat {self.workdir}/")
-                    if self.aerofile[-4:]==".dat":
-                        self.aerofile=aerofile[:-4]
-                    self.aerorad=True
-                    self._edit_namelist("aero_namelist","l_aerorad",str(self.aerorad*1))
-                    self._edit_namelist("aero_namelist","aerofile","'%s.dat'"%self.aerofile)
-                    self.aerofile+=".dat"
-                
-                
             
             if key=="otherargs":
                 otherargs=value
@@ -4024,14 +3872,8 @@ References
         cfg.append(str(self.starradius))
         cfg.append(str(self.keplerian*1))
         cfg.append(str(self.meananomaly0))
-        cfg.append(str(self.aerosol*1))
-        cfg.append(str(self.apart))
-        cfg.append(str(self.asource))
-        cfg.append(str(self.rhop))
-        cfg.append(str(self.fcoeff))
-        cfg.append(str(self.aerobulk))
-        cfg.append(str(self.aerorad*1))
-        cfg.append(str(self.aerofile))
+        cfg.append(str(self.allowlibrate*1))
+        cfg.append(str(self.soldaysperorb))
         
         print("Writing configuration....\n"+"\n".join(cfg))
         print("Writing to %s...."%filename)
