@@ -2038,8 +2038,7 @@ class Model(object):
             substellarlon : float, optional
                The longitude of the substellar point, if synchronous==True. Default 180°
             allowlibrate : bool, optional
-               True/False. If True, allows for libration of the substellar point due to obliquity and,
-               if keplerian==True, eccentricity. True by default.
+               True/False. If True and synchronous==True, allows for libration of the substellar point due to obliquity and eccentricity. True by default.
             soldaysperorb : float, optional
                If synchronous==True, solar days experienced per orbit. 0.0 is typical tidal-locked behavior,
                but other values can be used for other spin-orbit resonances, e.g. 0.5 for 3:2 resonance
